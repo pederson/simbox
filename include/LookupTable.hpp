@@ -4,7 +4,7 @@
  *  This contains the LookupTable class
  *	and associated functions, defs, and enums
  *
- *  @author Dylan Pederson
+ *  @author D. Pederson
  *  @bug No known bugs.
  */
 

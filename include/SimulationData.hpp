@@ -4,7 +4,7 @@
  *  This contains the SimulationData base
  *  class and associated functions, defs, and enums
  *
- *  @author Dylan Pederson
+ *  @author D. Pederson
  *  @bug No known bugs.
  */
 
@@ -18,10 +18,10 @@
 #include <map>
 #include <vector>
 
-using namespace std;
+ namespace simbox{
 
 // topology names corresponding to ElementType from Mesh.hpp
-const vector<string> xdmf_topology = {"Empty","Polyvertex","Polyline",
+const std::vector<std::string> xdmf_topology = {"Empty","Polyvertex","Polyline",
 									  "Triangle", "Quadrilateral","Tetrahedron",
 									  "Hexahedron","Unknown","Pyramid","Unknown"};
 
@@ -38,29 +38,30 @@ public:
 	// inspectors
 	virtual void print_summary() const = 0;
 	virtual const Mesh & mesh() const = 0;
-	virtual vector<double> time() const = 0;
-	virtual vector<string> nodefields() const = 0;
-	virtual vector<string> cellfields() const = 0;
-	virtual vector<string> transients() const = 0;
-	virtual const double * get_nodefield(string fld, unsigned int tind) const = 0;
-	virtual const double * get_nodefield(string fld, double t) const = 0;
-	virtual const double * get_cellfield(string fld, unsigned int tind) const = 0;
-	virtual const double * get_cellfield(string fld, double t) const = 0;
-	virtual const double * get_transient(string tr) const = 0;
-	virtual bool field_exists(string f) const = 0;
+	virtual std::vector<double> time() const = 0;
+	virtual std::vector<std::string> nodefields() const = 0;
+	virtual std::vector<std::string> cellfields() const = 0;
+	virtual std::vector<std::string> transients() const = 0;
+	virtual const double * get_nodefield(std::string fld, unsigned int tind) const = 0;
+	virtual const double * get_nodefield(std::string fld, double t) const = 0;
+	virtual const double * get_cellfield(std::string fld, unsigned int tind) const = 0;
+	virtual const double * get_cellfield(std::string fld, double t) const = 0;
+	virtual const double * get_transient(std::string tr) const = 0;
+	virtual bool field_exists(std::string f) const = 0;
 
 	// mutators
-	virtual void add_cellfield(string fld) = 0;
-	virtual void add_nodefield(string fld) = 0;
-	virtual void add_transient(string tr) = 0;
-	virtual void set_nodefield(string fld, unsigned int tind, const double * data) = 0;
-	virtual void set_nodefield(string fld, double t, const double * data) = 0;
-	virtual void set_cellfield(string fld, unsigned int tind, const double * data) = 0;
-	virtual void set_cellfield(string fld, double t, const double * data) = 0;
-	virtual void set_transient(string fld, const double * data) = 0;
+	virtual void add_cellfield(std::string fld) = 0;
+	virtual void add_nodefield(std::string fld) = 0;
+	virtual void add_transient(std::string tr) = 0;
+	virtual void set_nodefield(std::string fld, unsigned int tind, const double * data) = 0;
+	virtual void set_nodefield(std::string fld, double t, const double * data) = 0;
+	virtual void set_cellfield(std::string fld, unsigned int tind, const double * data) = 0;
+	virtual void set_cellfield(std::string fld, double t, const double * data) = 0;
+	virtual void set_transient(std::string fld, const double * data) = 0;
 
 	// optional tasks
 	virtual void write_XDMF() = 0;
 };
 
+}
 #endif

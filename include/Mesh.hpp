@@ -4,7 +4,7 @@
  *  This contains the base Mesh class
  *  and associated functions, defs, and enums
  *
- *  @author Dylan Pederson
+ *  @author D. Pederson
  *  @bug No known bugs.
  */
 
@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include <iostream>
+#include <memory>
 #include <vector>
 #include <list>
 #include <map>
@@ -27,7 +28,7 @@ namespace simbox{
 
 // these enums follow closely to the MSH format
 // http://www.manpagez.com/info/gmsh/gmsh-2.2.6/gmsh_63.php
-enum MeshType{REGULAR=0, UNSTRUCTURED_TRI=1, UNSTRUCTURED_QUAD=2, MESH_UNKNOWN};
+enum MeshType{REGULAR=0, UNSTRUCTURED_TRI=1, UNSTRUCTURED_QUAD=2, UNSTRUCTURED_MIXED=3, MESH_UNKNOWN};
 enum class ElementType : unsigned int {EMPTY_0=0, POINT_1, LINE_2, TRI_3, QUAD_4, TET_4, HEX_8, PRISM_6, PYRAMID_5, UNKNOWN};
 
 const std::vector<std::string> elnames = {"Empty", "Point_1", "Line_2", "Tri_3", "Quad_4", "Tet_4", "Hex_8", "Prism_6", "Pyramid_5", "Unknown"};
@@ -57,12 +58,16 @@ public:
   // data
   double          x[dim];
 
+
   // constructor
   Node(double x0=0.0, double x1=0.0, double x2=0.0){
     x[0] = x0;
     if (dim > 1) x[1] = x1;
     if (dim > 2) x[2] = x2;
-    if (dim > 3) throw("ERROR: That Node constructor not implemented for dim > 3");
+    if (dim > 3){
+      std::cerr << "Node: That constructor not implemented for dim > 3" << std::endl;
+      throw -1;
+    }
   }
   
   // constructor
@@ -168,17 +173,19 @@ public:
   ElementType                         type;
   
 
-  Element();
-  Element(std::vector<unsigned int> node_inds);
-  ~Element();
+  Element()
+  : type(ElementType::EMPTY_0) {};
+
+  Element(std::vector<unsigned int> node_inds, ElementType etype)
+  : nodeinds(), type(etype) {};
 
   // utils
-  void print_summary(std::ostream & os=std::cout) const;
-
-private:
-
-  void recalc_type();
-
+  void print_summary(std::ostream & os=std::cout) const{
+    os << "<Element topology=\"" << get_string(type) << "\">";
+    for (unsigned int i=0; i<nodeinds.size(); i++) os << nodeinds.at(i) << " ";
+    os << "</Element>" ;
+    return;
+  }
 };
 
 
@@ -195,124 +202,179 @@ private:
 template<std::size_t dim>
 class Mesh{
 public:
-  Mesh();   // constructor
-  Mesh(const Mesh & mesh);  // copy constructor
-  ~Mesh();    // destructor
+  // constructor
+  Mesh()
+  : m_mesh_type(MESH_UNKNOWN) {};
 
-  void print_summary(std::ostream & os=std::cout) const;
-  void print_detailed(std::ostream & os=std::cout) const;
+  // copy constructor
+  // Mesh(const Mesh & mesh);
+  
+  // // destructor
+  // ~Mesh();
+
+  void print_summary(std::ostream & os=std::cout) const{
+    os << "<Mesh " ;
+    os << "dim=\"" << dim << "\"" ;
+    
+    if (snodecount() == 0){
+      os << ">" << std::endl;
+      os << "</Mesh>" << std::endl;
+      return;
+    }
+
+    
+
+    os << " type=\"";
+    if (m_mesh_type==REGULAR) os << "REGULAR" ;
+    else if (m_mesh_type==UNSTRUCTURED_TRI) os << "UNSTRUCTURED_TRI" ;
+    else if (m_mesh_type==UNSTRUCTURED_QUAD) os << "UNSTRUCTURED_QUAD" ;
+    else if (m_mesh_type == UNSTRUCTURED_MIXED) os << "UNSTRUCTURED_MIXED" ;
+    else os << "MESH_UNKNOWN" ;
+    os << "\"" ;
+    os << ">" << std::endl;
+
+    os << "\t<snodecount>" << snodecount() << "</snodecount>" << std::endl;
+    // os << "\t<sedgecount>" << sedgecount() << "</sedgecount>" << std::endl;
+    os << "\t<selementcount>" << selementcount() << "</selementcount>" << std::endl;
+    os << "\t<dnodecount>" << dnodecount() << "</dnodecount>" << std::endl;
+    // os << "\t<dedgecount>" << dedgecount() << "</dedgecount>" << std::endl;
+    os << "\t<delementcount>" << delementcount() << "</delementcount>" << std::endl;
+
+    os << "\t<Extents>" << m_minpt << ", " << m_maxpt << "</Extents>" << std::endl;
+    
+    for (auto i=m_nodedata.begin(); i!=m_nodedata.end(); i++) os << "\n" << "\t<NodeData>" << i->first << "</NodeData>" << std::endl;
+    for (auto i=m_elementdata.begin(); i!=m_elementdata.end(); i++) os << "\n" << "\t<ElementData>" << i->first << "</ElementData>" << std::endl;
+
+    os << "</Mesh>" << std::endl;
+
+    return;
+  }
+
+  // void print_detailed(std::ostream & os=std::cout) const;
   
 
   // metadata access
-  MeshType mesh_type() const {return _mesh_type;};
-  unsigned int nodecount() const {return m_snodes.size()+m_dnodes.size();};
-  unsigned int edgecount() const {return m_sedges.size()+m_dedges.size();};
-  unsigned int elementcount() const {return m_selements.size()+m_delements.size();};
-  // double xmin() const {return _xmin;};
-  // double ymin() const {return _ymin;};
-  // double zmin() const {return _zmin;};
-  // double xmax() const {return _xmax;};
-  // double ymax() const {return _ymax;};
-  // double zmax() const {return _zmax;};
-  unsigned int nearest_node(const Node & n) const;
-  unsigned int nearest_element(const Node & n) const;
+  MeshType mesh_type() const {return m_mesh_type;};
+  unsigned int snodecount() const {return m_snodes.size();};
+  // unsigned int sedgecount() const {return m_sedges.size();};
+  unsigned int selementcount() const {return m_selements.size();};
+  unsigned int dnodecount() const {return m_dnodes.size();};
+  // unsigned int dedgecount() const {return m_dedges.size();};
+  unsigned int delementcount() const {return m_delements.size();};
+
+  unsigned int nearest_node(const Node<dim> & n) const{
+    double dsq = Node<dim>::distsq(n,m_snodes[0]);
+    unsigned int minloc = 0;
+    double minval = dsq;
+    for (auto i=1; i<m_snodes.size(); i++){
+      dsq = Node<dim>::distsq(n,m_snodes[i]);
+      if (dsq < minval){
+        minloc = i;
+        minval = dsq;
+      }  
+    }
+    return minloc;
+  }
+  // unsigned int nearest_element(const Node & n) const;
 
   // node and element access
-  Node & snode(unsigned int i) {return m_snodes.at(i);};
-  Edge & sedge(unsigned int i) {return m_sedge.at(i);};
-  Element & selement(unsigned int i) {return m_selements.at(i);};
-  const Node & snode(unsigned int i) const {return m_snodes.at(i);};
-  const Edge & sedge(unsigned int i) const {return m_sedge.at(i);};
-  const Element & selement(unsigned int i) const {return m_selements.at(i);};
-  
-  double get_element_center_x(unsigned int i) const;
-  double get_element_center_y(unsigned int i) const;
-  double get_element_center_z(unsigned int i) const;
+  Node<dim> & snode(unsigned int i) {return m_snodes.at(i);};
+  // Edge & sedge(unsigned int i) {return m_sedge.at(i);};
+  Element<dim> & selement(unsigned int i) {return m_selements.at(i);};
+  const Node<dim> & snode(unsigned int i) const {return m_snodes.at(i);};
+  // const Edge & sedge(unsigned int i) const {return m_sedge.at(i);};
+  const Element<dim> & selement(unsigned int i) const {return m_selements.at(i);};
+
+  Node<dim> & dnode(unsigned int i) {return m_dnodes.at(i);};
+  // Edge & dedge(unsigned int i) {return m_dedge.at(i);};
+  Element<dim> & delement(unsigned int i) {return m_delements.at(i);};
+  const Node<dim> & dnode(unsigned int i) const {return m_dnodes.at(i);};
+  // const Edge & dedge(unsigned int i) const {return m_dedge.at(i);};
+  const Element<dim> & delement(unsigned int i) const {return m_delements.at(i);};
 
   // property interaction and access
-  const double & x();
-  const double & y();
-  const double & z();
-  const bool & boundary();
-  const unsigned int & core_group();
-  const unsigned int & num_connections();
-  const double & data(std::string fieldname) const;
+  const std::vector<double> & nodedata(std::string fieldname) const {return m_nodedata.at(fieldname);};
+  const std::vector<double> & elementdata(std::string fieldname) const {return m_elementdata.at(fieldname);};
 
-  const double * nodedata(std::string fieldname) const;
-  const double * elementdata(std::string fieldname) const;
+  // void set_nodecount(unsigned int count);
+  // void set_elementcount(unsigned int count);
 
-  void set_nodecount(unsigned int count);
-  void set_elementcount(unsigned int count);
-  void set_num_dims(unsigned int ndims) {_num_dims = ndims;};
+  void add_nodedata(std::string property_name, const double * values){
+    std::vector<double> prop;
+    prop.assign(m_snodes.size(), 0.0);
+    for (unsigned int i=0; i<m_snodes.size(); i++) prop.at(i) = values[i];
+    m_nodedata[property_name] = prop;
+  }
 
-  void add_phys_property(std::string property_name, const double * property_vals);
-  void add_phys_property(std::string proprety_name, double init_val);
-  std::vector<std::string> get_phys_properties() const {return _phys_property_names;};
+  void add_nodedata(std::string property_name, double init_val){
+    std::vector<double> prop;
+    prop.assign(m_snodes.size(), init_val);
+    m_nodedata[property_name] = prop;
+  }
 
-  void add_nodedata(std::string property_name, const double * values);
-  void add_nodedata(std::string proprety_name, double init_val);
-  void add_elementdata(std::string property_name, const double * values);
-  void add_elementdata(std::string proprety_name, double init_val);
+  void add_elementdata(std::string property_name, const double * values){
+    std::vector<double> prop;
+    prop.assign(m_selements.size(), 0.0);
+    for (unsigned int i=0; i<m_selements.size(); i++) prop.at(i) = values[i];
+    m_elementdata[property_name] = prop;
+  }
+
+  void add_elementdata(std::string property_name, double init_val){
+    std::vector<double> prop;
+    prop.assign(m_selements.size(), init_val);
+    m_elementdata[property_name] = prop;
+  }
+
   void set_nodedata(std::string property_name, unsigned int i, double val){m_nodedata.at(property_name).at(i) = val;};
+
   void set_elementdata(std::string property_name, unsigned int i, double val){m_elementdata.at(property_name).at(i) = val;};
-  std::vector<std::string> get_nodedata_names() const;
-  std::vector<std::string> get_elementdata_names() const;
+  
+  std::vector<std::string> get_nodedata_names() const{
+    std::vector<std::string> names;
+    for (auto p=m_nodedata.begin(); p!=m_nodedata.end(); p++){
+      names.push_back(p->first);
+    }
+    return names;
+  }
+  
+  std::vector<std::string> get_elementdata_names() const{
+    std::vector<std::string> names;
+    for (auto p=m_elementdata.begin(); p!=m_elementdata.end(); p++){
+      names.push_back(p->first);
+    }
+    return names;
+  }
 
-  void reset_property(std::string property_name, double reset_val=0.0);
-  void set_phys_property(std::string property_name, unsigned int i, double val){_phys_properties.at(property_name).at(i) = val;};
-  void increment_phys_property(std::string property_name, unsigned int i, double val){_phys_properties.at(property_name).at(i) += val;};
+  void calc_extents(){
+    m_minpt = m_snodes.at(0);
+    m_maxpt = m_snodes.at(0);
+    for (unsigned int i=1; i<m_snodes.size(); i++){
+      for (auto j=0; j<dim; j++){
+        if (m_snodes.at(i).x[j] < m_minpt.x[j]) m_minpt.x[j] = m_snodes.at(i).x[j];
+        if (m_snodes.at(i).x[j] > m_maxpt.x[j]) m_maxpt.x[j] = m_snodes.at(i).x[j];
+      }
+    }
+    return;
+  }
 
-  // grid generation and refinement
-  //static Mesh create_unstructured_tri_simple();
-
-  // reading and writing files
-  static Mesh read_MSH(std::string filename);
-  static Mesh read_XML(std::string filename);
-  static Mesh read_NEU(std::string filename, unsigned int byte_offset=0);
-  static Mesh read_CAS(std::string filename, unsigned int byte_offset=0);
-  void write_MSH(std::string filename) const;
-  void write_NEU(std::string filename) const;
-  void write_CAS(std::string filename) const;
-
-  void calc_extents();
-
-//private:
 protected:
   // metadata
-  MeshType m_mesh_type;
-  Box<dim> m_bounds;
-  // double _xmin, _xmax, _ymin, _ymax, _zmin, _zmax;
-  
+  MeshType                        m_mesh_type;
+  Node<dim>                       m_minpt, m_maxpt;
 
   // nodes and elements
-  std::vector<Node>               m_snodes;     // array of STATIC nodes
-  std::vector<Edge>               m_sedges;     // array of STATIC edges
-  std::vector<Element>            m_selements;  // array of STATIC elements
-  std::vector<Node>               m_dnodes;     // array of DYNAMIC nodes
-  std::vector<Edge>               m_dedges;     // array of DYNAMIC edges
-  std::vector<Element>            m_delements;  // array of DYNAMIC elements
+  std::vector<Node<dim>>          m_snodes;     // array of STATIC nodes
+  // std::vector<Edge<dim>>          m_sedges;     // array of STATIC edges
+  std::vector<Element<dim>>       m_selements;  // array of STATIC elements
+  std::list<Node<dim>>            m_dnodes;     // array of DYNAMIC nodes
+  // std::list<Edge<dim>>            m_dedges;     // array of DYNAMIC edges
+  std::list<Element<dim>>         m_delements;  // array of DYNAMIC elements
 
   // user-defined properties for the mesh
-  // DYLAN_TODO: RENAME THIS NodeData and ElementData
-  std::vector<std::string> _phys_property_names; // the name position in this vector corresponds with the position of the property value in the node
-  std::map<std::string, std::vector<double>> _phys_properties;
-  
-  std::map<std::string, std::vector<double>> m_nodedata;
-  std::map<std::string, std::vector<double>> m_elementdata;
-
-  // other properties conveniently placed in arrays (on demand) in order to return data
-  std::vector<bool> _boundary;
-  std::vector<double> _x, _y, _z;
-  std::vector<unsigned int> _core_group, _num_connections;
-
-  void read_MSH_internal(std::string filename);
-
-  
+  std::map<std::string, std::vector<double>>      m_nodedata;
+  std::map<std::string, std::vector<double>>      m_elementdata;
 
 };
-
-
-
 
 }
 #endif

@@ -4,7 +4,7 @@
  *  This contains the SimulationDataHDF class
  *  class and associated functions, defs, and enums
  *
- *  @author Dylan Pederson
+ *  @author D. Pederson
  *  @bug No known bugs.
  */
 
@@ -16,8 +16,6 @@
 #include <hdf5.h>
 
 
-using namespace std;
-
 /** @class SimulationDataHDF
  *  @brief class for I/O using HDF5 file format
  *
@@ -28,32 +26,32 @@ using namespace std;
  */
 class SimulationDataHDF : public SimulationData{
 public:
-	SimulationDataHDF(string filename, const Domain & dm, const Mesh & mesh, vector<double> time);
+	SimulationDataHDF(std::string filename, const Domain & dm, const Mesh & mesh, std::vector<double> time);
 	~SimulationDataHDF();
 
 	// inspectors
 	void print_summary() const;
 	const Mesh & mesh() const;
-	vector<double> time() const;
-	vector<string> nodefields() const;
-	vector<string> cellfields() const;
-	vector<string> transients() const;
-	const double * get_nodefield(string fld, unsigned int tind) const;
-	const double * get_nodefield(string fld, double t) const;
-	const double * get_cellfield(string fld, unsigned int tind) const;
-	const double * get_cellfield(string fld, double t) const;
-	const double * get_transient(string tr) const;
-	bool field_exists(string f) const;
+	std::vector<double> time() const;
+	std::vector<std::string> nodefields() const;
+	std::vector<std::string> elemfields() const;
+	std::vector<std::string> transients() const;
+	const double * get_nodefield(std::string fld, unsigned int tind) const;
+	const double * get_nodefield(std::string fld, double t) const;
+	const double * get_elemfield(std::string fld, unsigned int tind) const;
+	const double * get_elemfield(std::string fld, double t) const;
+	const double * get_transient(std::string tr) const;
+	bool field_exists(std::string f) const;
 
 	// mutators
-	void add_cellfield(string fld);
-	void add_nodefield(string fld);
-	void add_transient(string tr);
-	void set_nodefield(string fld, unsigned int tind, const double * data);
-	void set_nodefield(string fld, double t, const double * data);
-	void set_cellfield(string fld, unsigned int tind, const double * data);
-	void set_cellfield(string fld, double t, const double * data);
-	void set_transient(string fld, const double * data);
+	void add_elemfield(std::string fld);
+	void add_nodefield(std::string fld);
+	void add_transient(std::string tr);
+	void set_nodefield(std::string fld, unsigned int tind, const double * data);
+	void set_nodefield(std::string fld, double t, const double * data);
+	void set_elemfield(std::string fld, unsigned int tind, const double * data);
+	void set_elemfield(std::string fld, double t, const double * data);
+	void set_transient(std::string fld, const double * data);
 
 	// optional tasks
 	void write_XDMF();
@@ -66,43 +64,43 @@ private:
 	const Domain * m_dm;
 	const Mesh * m_mesh;
 
-	// field strings
-	vector<string> m_nodefields;
-	vector<string> m_cellfields;
-	vector<string> m_transients;
+	// field std::strings
+	std::vector<std::string> m_nodefields;
+	std::vector<std::string> m_elemfields;
+	std::vector<std::string> m_transients;
 
 	// time info
-	vector<double> m_time;
+	std::vector<double> m_time;
 
 	// HDF5 file resources
-	string 		m_filename;
-	hid_t 		m_h5file;
-	hid_t		m_plist_id;
-	hid_t		m_transient_space;
-	hid_t		m_nodefield_space;
-	hid_t		m_cellfield_space;
-	hid_t		m_node_memspace;
-	hid_t		m_cell_memspace;
+	std::string 	m_filename;
+	hid_t 			m_h5file;
+	hid_t			m_plist_id;
+	hid_t			m_transient_space;
+	hid_t			m_nodefield_space;
+	hid_t			m_elemfield_space;
+	hid_t			m_node_memspace;
+	hid_t			m_elem_memspace;
 
 	// HDF5 file access
 	void write_HDF5_mesh();
 	void write_HDF5_time();
 
-	vector<string> 		m_groupnames;
-	map<string, hid_t> 	m_group_id;	// group for each field
-	map<string, hid_t> 	m_dataspace_id;
-	map<string, hid_t>	m_slicespace_id;
-	map<string, hid_t> 	m_dataset_id;
+	std::vector<std::string> 		m_groupnames;
+	std::map<std::string, hid_t> 	m_group_id;	// group for each field
+	std::map<std::string, hid_t> 	m_dataspace_id;
+	std::map<std::string, hid_t>	m_slicespace_id;
+	std::map<std::string, hid_t> 	m_dataset_id;
 
-	double * m_nodebuffer;
-	double * m_cellbuffer;
-	double * m_transbuffer;
+	double * m_nodebuffer;			// buffer for node data
+	double * m_elembuffer;			// buffer for element data
+	double * m_transbuffer;			// buffer for transient data
 
 	// XDMF file access
 	void write_XDMF_header(std::ofstream & ofs);
 	void write_XDMF_DataItems(std::ofstream & ofs);
 	void write_XDMF_timesteps(std::ofstream & ofs);
-	void write_XDMF_reference(std::ofstream & ofs, string refname);
+	void write_XDMF_reference(std::ofstream & ofs, std::string refname);
 
 };
 

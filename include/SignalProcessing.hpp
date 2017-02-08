@@ -4,7 +4,7 @@
  *  This contains the SignalProcessing classes
  *  and associated functions, defs, and enums
  *
- *  @author Dylan Pederson
+ *  @author D. Pederson
  *  @bug No known bugs.
  */
 
@@ -16,15 +16,17 @@
 #include <iostream>
 #include <complex>
 
-/** @class StreamProcessing
+namespace simbox{
+
+/** @namespace sequential
  *  @brief sequential processing
  *
- *  StreamProcessing functions are meant
+ *  sequential functions are meant
  *	to do signal processing in a sequential
  *	fashion (instead of in a batch)
  *
  */
-namespace StreamProcessing 
+namespace sequential 
 {
 
 	class dft{
@@ -98,16 +100,16 @@ namespace StreamProcessing
 
 }
 
-/** @class SignalProcessing
+/** @namespace batch
  *  @brief batch processing
  *
- *  SignalProcessing functions are meant
+ *  these functions are meant
  *	to do signal processing in a batch
  *	fashion (when the full signal is 
  *	available from the beginning)
  *
  */
-namespace SignalProcessing
+namespace batch
 {
 	template <class T>
 	void dft(double dt, double freq, unsigned int npoints, T * input_signal, std::complex<double> & transform){
@@ -143,4 +145,5 @@ namespace SignalProcessing
 
 }
 
+}
 #endif
