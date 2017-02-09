@@ -23,6 +23,7 @@
  *	for parallel computation and I/O
  *
  */
+template<std::size_t dim>
 class Domain{
 public:
 

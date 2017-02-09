@@ -32,12 +32,13 @@ const std::vector<std::string> xdmf_topology = {"Empty","Polyvertex","Polyline",
  *	functions for I/O involving simulations
  *
  */
+template<std::size_t dim>
 class SimulationData{
 public:
 
 	// inspectors
 	virtual void print_summary(std::ostream & os = std::cout) const = 0;
-	virtual const Mesh & mesh() const = 0;
+	virtual const Mesh<dim> & mesh() const = 0;
 	virtual std::vector<double> time() const = 0;
 	virtual std::vector<std::string> nodefields() const = 0;
 	virtual std::vector<std::string> elemfields() const = 0;

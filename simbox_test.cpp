@@ -12,6 +12,9 @@
 #include <mpi.h>
 #include "include/mpitools.hpp"
 
+#include "include/Domain.hpp"
+#include "include/SimulationData.hpp"
+
 using namespace std;
 
 int main(int argc, char * argv[]){
@@ -37,6 +40,6 @@ int main(int argc, char * argv[]){
   cout << "attempting to initialize MPI..." << endl;
   mpi::init(&argc, &argv);
   cout << "done" << endl;
-  
+
   return 0;
 }

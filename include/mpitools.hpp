@@ -114,6 +114,7 @@ namespace mpi{
 	}
 
 	inline int rank(){
+		return 0;
 	}
 
 	inline bool is_master(){

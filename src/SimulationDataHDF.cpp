@@ -55,8 +55,8 @@ vector<string> SimulationDataHDF::nodefields() const{
 	return m_nodefields;
 }
 
-vector<string> SimulationDataHDF::cellfields() const{
-	return m_cellfields;
+vector<string> SimulationDataHDF::elemfields() const{
+	return m_elemfields;
 }
 
 vector<string> SimulationDataHDF::transients() const{
@@ -90,8 +90,8 @@ bool SimulationDataHDF::field_exists(string f) const{
 			return true;
 		}
 	}
-	for (auto i=0; i<m_cellfields.size(); i++){
-		if (m_cellfields.at(i).compare(f) == 0){
+	for (auto i=0; i<m_elemfields.size(); i++){
+		if (m_elemfields.at(i).compare(f) == 0){
 			return true;
 		}
 	}
@@ -100,7 +100,7 @@ bool SimulationDataHDF::field_exists(string f) const{
 
 // mutators
 void SimulationDataHDF::add_cellfield(string fld){
-	m_cellfields.push_back(fld);
+	m_elemfields.push_back(fld);
 	m_group_id[fld] = m_group_id["Fields"];
 
 	// create dataset for field
@@ -449,9 +449,9 @@ void SimulationDataHDF::write_XDMF_DataItems(ofstream & ofs){
 		ofs << "\t&HDF5FILE;:/Fields/" << m_nodefields[i] << endl;
 		ofs << "</DataItem>" << endl;
 	}
-	for (auto i=0; i<m_cellfields.size(); i++){
-		ofs << "<DataItem Name=\"" << m_cellfields[i] << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&ntsteps; &nelements;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Fields/" << m_cellfields[i] << endl;
+	for (auto i=0; i<m_elemfields.size(); i++){
+		ofs << "<DataItem Name=\"" << m_elemfields[i] << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&ntsteps; &nelements;\">" << endl;
+		ofs << "\t&HDF5FILE;:/Fields/" << m_elemfields[i] << endl;
 		ofs << "</DataItem>" << endl;
 	}
 
@@ -517,15 +517,15 @@ void SimulationDataHDF::write_XDMF_timesteps(ofstream & ofs){
 			ofs << "</DataItem>" << endl;
 			ofs << "</Attribute>" << endl;
 		}
-		for (auto f=0; f<m_cellfields.size(); f++){
-			ofs << "<Attribute Name=\"" << m_cellfields[f] << "\" AttributeType=\"Scalar\" Center=\"Cell\">" << endl;
+		for (auto f=0; f<m_elemfields.size(); f++){
+			ofs << "<Attribute Name=\"" << m_elemfields[f] << "\" AttributeType=\"Scalar\" Center=\"Cell\">" << endl;
 			ofs << "<DataItem ItemType=\"HyperSlab\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << endl;
 			ofs << "<DataItem Dimensions=\"3 2\" Format=\"XML\">" << endl;
 			ofs << i << " 0" << endl;
 			ofs << "1 1" << endl;
 			ofs << "1 &nelements;" << endl;
 			ofs << "</DataItem>" << endl;
-			write_XDMF_reference(ofs, m_cellfields[f]);
+			write_XDMF_reference(ofs, m_elemfields[f]);
 			ofs << "</DataItem>" << endl;
 			ofs << "</Attribute>" << endl;
 		}
