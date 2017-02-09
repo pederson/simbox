@@ -116,14 +116,14 @@ protected:
           file >> uint_in ;
           m_snodes.resize(uint_in);
           // set all the node values accordingly
-          for (auto i=0; i<uint_in; i++){
+          for (auto i=0; i<m_snodes.size(); i++){
             getline(file, line);
             file >> uint_in;  // the node index
             // Node<3> nd;
             for (auto j=0; j<3; j++){
               file >> doub_in;  // x coord
               // nd.x[j] = doub_in;
-              m_snodes[i].x[j] = (doub_in);
+              m_snodes[i].x[j] = doub_in;
             }
             // m_snodes.push_back(nd);
           }

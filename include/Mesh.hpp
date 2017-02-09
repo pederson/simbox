@@ -22,7 +22,7 @@
 #include <string>
 #include <fstream>
 
-#include "mpitools.hpp"
+// #include "mpitools.hpp"
 
 namespace simbox{
 
@@ -172,12 +172,20 @@ public:
   std::vector<unsigned int>           nodeinds;
   ElementType                         type;
   
-
+  // constructor
   Element()
   : type(ElementType::EMPTY_0) {};
 
+  // constructor
   Element(std::vector<unsigned int> node_inds, ElementType etype)
   : nodeinds(), type(etype) {};
+
+  // assignment
+  Element & operator= (const Element & p){
+    nodeinds = p.nodeinds;
+    type = p.type;
+    return *this;
+  }
 
   // utils
   void print_summary(std::ostream & os=std::cout) const{
@@ -349,11 +357,13 @@ public:
     m_minpt = m_snodes.at(0);
     m_maxpt = m_snodes.at(0);
     for (unsigned int i=1; i<m_snodes.size(); i++){
+      // std::cout << "I: " << i << m_snodes.at(i) << std::endl;
       for (auto j=0; j<dim; j++){
         if (m_snodes.at(i).x[j] < m_minpt.x[j]) m_minpt.x[j] = m_snodes.at(i).x[j];
         if (m_snodes.at(i).x[j] > m_maxpt.x[j]) m_maxpt.x[j] = m_snodes.at(i).x[j];
       }
     }
+    // std::cout << "minpt: " << m_minpt << " maxpt: " << m_maxpt << std::endl;
     return;
   }
 

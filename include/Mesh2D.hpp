@@ -1,5 +1,5 @@
 /** @file Mesh2D.hpp
- *  @brief file with 3D Mesh class
+ *  @brief file with 2D Mesh class
  *
  *  This contains the base Mesh2D class
  *  and associated functions, defs, and enums
@@ -20,7 +20,7 @@ namespace simbox{
 
 
 /** @class Mesh2D
- *  @brief a mesh in 3 dimensions
+ *  @brief a mesh in 2 dimensions
  *
  *  a bunch of points connected by edges. Or
  *  from a different perspective, a bunch of 
@@ -38,10 +38,31 @@ public:
   // Mesh2D(const Mesh2D & mesh);
 
   // constructor by 3D mesh
-  Mesh2D(const Mesh3D & mesh);
+  Mesh2D(const Mesh3D & mesh) 
+  {
+    // copy over the first 2 coordinates
+    m_snodes.resize(mesh.snodecount());
+    for (auto i=0; i<mesh.snodecount(); i++){
+      m_snodes[i] = Node<2>(mesh.snode(i).x[0],mesh.snode(i).x[1]);
+    }
+
+    // copy over elements
+    m_selements.resize(mesh.selementcount());
+    for (auto i=0; i<mesh.selementcount(); i++){
+      m_selements[i].nodeinds = mesh.selement(i).nodeinds;
+      m_selements[i].type = mesh.selement(i).type;
+    }
+
+    // copy over nodedata and elementdata
+    std::vector<std::string> nnames=mesh.get_nodedata_names(), enames=mesh.get_elementdata_names();
+    for (auto i=0; i<nnames.size(); i++) add_nodedata(nnames[i], &(mesh.nodedata(nnames[i]).front()));
+    for (auto i=0; i<enames.size(); i++) add_elementdata(enames[i], &(mesh.elementdata(enames[i]).front()));
+
+    calc_extents();
+  }
   
   // destructor
-  ~Mesh2D();
+  // ~Mesh2D();
 
 
   // grid generation and refinement
@@ -68,7 +89,8 @@ std::shared_ptr<Mesh2D> Mesh2D::read_MSH(std::string filename){
   std::shared_ptr<Mesh3D> mesh3 = Mesh3D::read_MSH(filename);
 
   // convert to 2D mesh
-  std::shared_ptr<Mesh2D> outmesh(*mesh3);
+  std::shared_ptr<Mesh2D> outmesh = std::make_shared<Mesh2D>(*mesh3);
+
   return outmesh;
 }
 

@@ -10,6 +10,8 @@
 #ifndef _DOMAIN_H
 #define _DOMAIN_H
 
+ #include "mpitools.hpp"
+
  namespace simbox{
 
 /** @class Domain
@@ -57,8 +59,9 @@ public:
 	virtual unsigned int elementcount() const = 0;
 
 	/** @brief total number of procs in domain
-	 *
-	 *  @return number of elements
+	 *		   Some of the available procs might
+	 *		   not be in use...
+	 *  @return number of procs
 	 */
 	virtual unsigned int numprocs() const = 0;
 

@@ -10,4 +10,4 @@ Toolbox for numerical discretizations of PDEs
 	* Timer
 	* LookupTable
 	* SignalGenerator
-	* SignalProcessing)
+	* SignalProcessing

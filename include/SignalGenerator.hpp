@@ -31,24 +31,48 @@ class SignalGenerator{
 public:
 
 	// inspectors
+	double magnitude() const 				{return m_magnitude;};
+	double offtime() const 					{return m_toff;};
+	virtual double freq_min() const 		{return 0.0;};
+	virtual double freq_max() const 		{return 0.0;};
+
 	virtual double value(double t) const = 0;
-	double magnitude() const {return m_magnitude;};
-	double offtime() const {return m_toff;};
-	virtual double freq_min() const {return 0.0;};
-	virtual double freq_max() const {return 0.0;};
 	virtual void print_summary(std::ostream & os = std::cout) const = 0;
 
 	// mutators
-	void set_offtime(double toff) {m_toff = toff;};
-	void set_magnitude(double magnitude);
+	void set_offtime(double toff) 			{m_toff = toff;};
+	void set_magnitude(double magnitude)	{m_magnitude = magnitude;};
 	
 
 protected:
 	// general
-	double m_magnitude;
-	double m_toff;
+	double 			m_magnitude;
+	double 			m_toff;
 
 
+};
+
+
+
+
+/** @class SignalCustom
+ *  @brief Custom signal defined by external function
+ *
+ *  
+ */
+class SignalCustom : public SignalGenerator{
+public:
+	SignalCustom(std::function<double(double)> fn)
+	: m_fn(fn) {};
+
+
+	double value(double t) const {return m_fn(t);};
+	void print_summary(std::ostream & os = std::cout) const{
+		os << "Custom";
+	}
+
+protected:
+	std::function<double(double)> 		m_fn;
 };
 
 
@@ -60,7 +84,7 @@ protected:
  */
 class SignalConstant : public SignalGenerator{
 public:
-	SignalConstant(double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalConstant(double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_magnitude = magnitude;
 		m_toff = toff;
@@ -81,7 +105,7 @@ public:
  */
 class SignalGaussian : public SignalGenerator{
 public:
-	SignalGaussian(double sigma_t, double t0=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalGaussian(double sigma_t, double t0=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_sigma_t = sigma_t;
 		m_t0 = t0;
@@ -99,7 +123,8 @@ public:
 	double freq_max() const {return 1.0/m_sigma_t;};
 
 protected:
-	double m_sigma_t, m_t0;
+	double 			m_sigma_t; 
+	double			m_t0;
 };
 
 /** @class SignalGaussianBurst
@@ -110,7 +135,7 @@ protected:
  */
 class SignalGaussianBurst : public SignalGenerator{
 public:
-	SignalGaussianBurst(double sigma_f, double f0=0.0, double t0=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalGaussianBurst(double sigma_f, double f0=0.0, double t0=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_sigma_f = sigma_f;
 		m_f0 = f0;
@@ -133,7 +158,9 @@ public:
 	double freq_max() const {return m_f0+3.0*m_sigma_f;};
 
 protected:
-	double m_sigma_f, m_f0, m_t0;
+	double 			m_sigma_f;
+	double			m_f0;
+	double 			m_t0;
 };
 
 /** @class SignalSinusoid
@@ -144,7 +171,7 @@ protected:
  */
 class SignalSinusoid : public SignalGenerator{
 public:
-	SignalSinusoid(double freq_Hz, double phase=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalSinusoid(double freq_Hz, double phase=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_freq_Hz = freq_Hz;
 		m_phase = phase;
@@ -162,7 +189,8 @@ public:
 	double freq_max() const {return m_freq_Hz;};
 
 protected:
-	double m_freq_Hz, m_phase;	// phase in radians
+	double 			m_freq_Hz;
+	double			m_phase;	// phase in radians
 };
 
 /** @class SignalTwoSinusoids
@@ -173,7 +201,7 @@ protected:
  */
 class SignalTwoSinusoids : public SignalGenerator{
 public:
-	SignalTwoSinusoids(double freq_1, double magn_1, double phase_1, double freq_2, double magn_2, double phase_2, double toff = numeric_limits<double>::max())
+	SignalTwoSinusoids(double freq_1, double magn_1, double phase_1, double freq_2, double magn_2, double phase_2, double toff = std::numeric_limits<double>::max())
 	{
 		m_freq_1 = freq_1;
 		m_magn_1 = magn_1;
@@ -195,8 +223,12 @@ public:
 	double freq_max() const {return std::max(m_freq_1, m_freq_2);};
 
 protected:
-	double m_freq_1, m_magn_1, m_phase_1;	// phase in radians
-	double m_freq_2, m_magn_2, m_phase_2;	// phase in radians
+	double 			m_freq_1;
+	double 			m_magn_1;
+	double 			m_phase_1;	// phase in radians
+	double 			m_freq_2;
+	double			m_magn_2;
+	double 			m_phase_2;	// phase in radians
 };
 
 /** @class SignalRamp
@@ -206,7 +238,7 @@ protected:
  */
 class SignalRamp : public SignalGenerator{
 public:
-	SignalRamp(double t1, double t0=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalRamp(double t1, double t0=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_t0 = t0;
 		m_t1 = t1;
@@ -227,7 +259,8 @@ public:
 	}
 
 protected:
-	double m_t0, m_t1; // t0 = ramp start; t1 = ramp stop
+	double 			m_t0;
+	double			m_t1; 
 };
 
 /** @class SignalTanh
@@ -239,7 +272,7 @@ protected:
  */
 class SignalTanh : public SignalGenerator{
 public:
-	SignalTanh(double tup, double t0=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalTanh(double tup, double t0=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_t0 = t0;
 		m_magnitude = magnitude;
@@ -254,8 +287,8 @@ public:
 	}
 
 protected:
-	double m_t0; // t0 = tanh start;
-	double m_tup;
+	double 			m_t0; 
+	double 			m_tup;
 };
 
 /** @class SignalRicker
@@ -268,7 +301,7 @@ protected:
  */
 class SignalRicker : public SignalGenerator{
 public:
-	SignalRicker(double f0=0.0, double t0=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalRicker(double f0=0.0, double t0=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_f0 = f0;
 		m_t0 = t0;
@@ -289,7 +322,8 @@ public:
 	double freq_max() const {return 3.0*m_f0;};
 
 protected:
-	double m_f0, m_t0; // t0 = ricker start;
+	double 			m_f0;
+	double			m_t0;
 };
 
 /** @class SignalHeaviside
@@ -299,7 +333,7 @@ protected:
  */
 class SignalHeaviside : public SignalGenerator{
 public:
-	SignalHeaviside(double t0=0.0, double magnitude = 1.0, double toff = numeric_limits<double>::max())
+	SignalHeaviside(double t0=0.0, double magnitude = 1.0, double toff = std::numeric_limits<double>::max())
 	{
 		m_t0 = t0;
 		m_magnitude = magnitude;
@@ -313,7 +347,7 @@ public:
 	}
 
 protected:
-	double m_t0; // t0 = heaviside start;
+	double 			m_t0;
 };
 
 }

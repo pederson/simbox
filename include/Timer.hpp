@@ -43,13 +43,13 @@ public:
 
 	// reset the timer to 0.0
 	// If running, the timer will continue to run after reset
-	void reset()reset(){
+	void reset(){
 		gettimeofday(&m_begin, nullptr);
 		m_end = m_begin;
 	}
 
 	// read off the current time on the timer
-	double read() {
+	double read(){
 		if (m_running) gettimeofday(&m_end, nullptr);
 		return elapsed(m_begin, m_end);
 	}

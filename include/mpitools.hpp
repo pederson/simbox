@@ -1,9 +1,10 @@
 #ifndef _MPITOOLS_H
 #define _MPITOOLS_H
 
-#include <mpi.h>
 
+// #include <mpi.h>
 
+#if defined MPICH || defined OPEN_MPI
 
 namespace mpi{
 
@@ -90,5 +91,79 @@ namespace mpi{
 	}
 
 }
+
+#else
+	
+namespace mpi{
+
+	typedef unsigned int MPI_Datatype;
+	typedef unsigned int MPI_Comm;
+	typedef unsigned int MPI_Op;
+	typedef unsigned int MPI_Status;
+	typedef unsigned int MPI_Request;
+
+	inline void init(int * argc, char *** argv){
+		std::cout << "MPI UNAVAILABLE" << std::endl;
+	}
+
+	inline void finalize(){
+	}
+
+	inline int master_proc(){
+		return 0;
+	}
+
+	inline int rank(){
+	}
+
+	inline bool is_master(){
+	}
+
+	inline int size(){
+		return 1;
+	}
+
+	inline void send(void * buf, int count,
+					 MPI_Datatype datatype, int dest,
+					 int tag, MPI_Comm comm){
+	}
+
+	inline void isend(void * buf, int count,
+					 MPI_Datatype datatype, int dest,
+					 int tag, MPI_Comm comm, MPI_Request * req){
+	}
+
+	inline void recv(void * buf, int count,
+					 MPI_Datatype datatype, int source,
+					 int tag, MPI_Comm comm,
+					 MPI_Status * status){
+
+	}
+
+	inline void wait(MPI_Request * req, MPI_Status * status){
+
+	}
+
+	inline void sendrecv(void * sendbuf, int sendcount,
+						 MPI_Datatype sendtype, int dest, int sendtag,
+						 void * recvbuf, int recvcount, 
+						 MPI_Datatype recvtype, int source, int recvtag,
+						 MPI_Comm comm, MPI_Status * status){
+
+	}
+
+	inline void reduce(void * sendbuf, void * recvbuf, int count, 
+					   MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm){
+
+	}
+
+	inline void barrier(MPI_Comm comm){
+
+	}
+
+}
+
+
+#endif
 
 #endif
