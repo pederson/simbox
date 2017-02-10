@@ -38,7 +38,7 @@ public:
 
 	// inspectors
 	virtual void print_summary(std::ostream & os = std::cout) const = 0;
-	virtual const Mesh<dim> & mesh() const = 0;
+	virtual std::shared_ptr<const Mesh<dim>> mesh() const = 0;
 	virtual std::vector<double> time() const = 0;
 	virtual std::vector<std::string> nodefields() const = 0;
 	virtual std::vector<std::string> elemfields() const = 0;

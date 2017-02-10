@@ -14,6 +14,17 @@
 
 #include "include/Domain.hpp"
 #include "include/SimulationData.hpp"
+#include "include/SimulationDataHDF.hpp"
+
+
+class DomainOf1 : public simbox::Domain<3>{
+public:
+	unsigned int nodecount(int proc) const {return 4325;};
+	unsigned int elementcount(int proc) const {return 8656;};
+	unsigned int nodecount() const {return 4325;};
+	unsigned int elementcount() const {return 8656;};
+	unsigned int numprocs() const {return 1;};
+};
 
 using namespace std;
 
@@ -40,6 +51,14 @@ int main(int argc, char * argv[]){
   cout << "attempting to initialize MPI..." << endl;
   mpi::init(&argc, &argv);
   cout << "done" << endl;
+
+  DomainOf1 dom3;
+  // std::shared_ptr<const simbox::Mesh3D> cmsh3(new simbox::Mesh3D());
+  simbox::SimulationDataHDF<3> sdH5("H5Data.h5", dom3, mesh3, {0.0,1.0});
+  sdH5.add_nodefield("Doodee");
+  sdH5.add_elemfield("Caca");
+  sdH5.print_summary();
+  sdH5.write_XDMF();
 
   return 0;
 }

@@ -1,7 +1,6 @@
 #include "SimulationDataHDF.hpp"
 
-
-using namespace std;
+#include <iostream>
 
 SimulationDataHDF::SimulationDataHDF(string filename, const Domain & dm, const Mesh & mesh, vector<double> time)
 : m_dm(&dm)
@@ -32,7 +31,7 @@ SimulationDataHDF::SimulationDataHDF(string filename, const Domain & dm, const M
 
 SimulationDataHDF::~SimulationDataHDF(){
 	if (m_nodebuffer != nullptr) delete[] m_nodebuffer;
-	if (m_cellbuffer != nullptr) delete[] m_cellbuffer;
+	if (m_elembuffer != nullptr) delete[] m_elembuffer;
 	if (m_transbuffer != nullptr) delete[] m_transbuffer;
 
 	H5Fclose(m_h5file);
@@ -163,13 +162,13 @@ void SimulationDataHDF::set_nodefield(string fld, double t, const double * data)
 void SimulationDataHDF::set_cellfield(string fld, unsigned int tind, const double * data){
 	// copy to buffer
 	if(!field_exists(fld)){
-		cout << "ERROR: trying to write a field doesn't exist" << endl;
+		std::cout << "ERROR: trying to write a field doesn't exist" << std::endl;
 		throw -1;
 	}
 
 	// copy to buffer
-	//memcpy(m_cellbuffer, data, m_mesh->elementcount()*sizeof(double));
-	std::copy(data, data+m_mesh->elementcount(), m_cellbuffer);
+	//memcpy(m_elembuffer, data, m_mesh->elementcount()*sizeof(double));
+	std::copy(data, data+m_mesh->elementcount(), m_elembuffer);
 
 	// get plist_id
 	m_plist_id = H5Pcreate(H5P_DATASET_XFER);
@@ -183,7 +182,7 @@ void SimulationDataHDF::set_cellfield(string fld, unsigned int tind, const doubl
 	block[0] = 1;	block[1] = 1;
 
 	H5Sselect_hyperslab(m_dataspace_id[fld], H5S_SELECT_SET, offset, stride, count, block);
-	H5Dwrite(m_dataset_id[fld], H5T_NATIVE_DOUBLE, m_cell_memspace, m_dataspace_id[fld], m_plist_id, m_cellbuffer);
+	H5Dwrite(m_dataset_id[fld], H5T_NATIVE_DOUBLE, m_cell_memspace, m_dataspace_id[fld], m_plist_id, m_elembuffer);
 
 }
 
@@ -219,7 +218,7 @@ void SimulationDataHDF::write_HDF5_mesh(){
 	m_node_memspace = H5Screate_simple(1, &nnode_proc, NULL);
 	
 	// create field buffers
-	m_cellbuffer = new double[m_mesh->elementcount()];
+	m_elembuffer = new double[m_mesh->elementcount()];
 	m_nodebuffer = new double[m_mesh->nodecount()];
 
 	// set up subgroups
@@ -322,9 +321,9 @@ void SimulationDataHDF::write_HDF5_mesh(){
 	for (auto p=eprops.begin(); p!=eprops.end(); p++){
 		const double * dat = m_mesh->elementdata(*p);
 		elem_set = H5Dcreate(m_group_id["ElementData"], (*p).c_str(), H5T_NATIVE_DOUBLE, elemdatspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		for (auto i=0; i<m_mesh->elementcount(); i++) m_cellbuffer[i] = dat[i];
+		for (auto i=0; i<m_mesh->elementcount(); i++) m_elembuffer[i] = dat[i];
 		H5Sselect_hyperslab(elemdatspace, H5S_SELECT_SET, offsete, stridee, counte, blocke);
-		H5Dwrite(elem_set, H5T_NATIVE_DOUBLE, m_cell_memspace, elemdatspace, plist_id, m_cellbuffer);
+		H5Dwrite(elem_set, H5T_NATIVE_DOUBLE, m_cell_memspace, elemdatspace, plist_id, m_elembuffer);
 	}
 	
 }
@@ -358,7 +357,7 @@ unsigned int SimulationDataHDF::get_time_index(double timep){
 			return i;
 		}
 	}
-	cout << "ERROR: that time slot doesn't exist" << endl;
+	cout << "ERROR: that time slot doesn't exist" << std::endl;
 	throw -1;
 }
 
@@ -371,88 +370,88 @@ void SimulationDataHDF::write_XDMF(){
 
 	write_XDMF_header(ofs);
 
-	ofs << "<Xdmf Version=\"2.0\" xmlns:xi=\"http://www.w3.org/2001/XInclude\">" << endl;
+	ofs << "<Xdmf Version=\"2.0\" xmlns:xi=\"http://www.w3.org/2001/XInclude\">" << std::endl;
 
 	write_XDMF_DataItems(ofs);
 
 	// write domain header
-	ofs << "<Domain>" << endl;
-	ofs << "\t<Grid Name=\"TimeSeries\" GridType=\"Collection\" CollectionType=\"Temporal\">" << endl;
-	ofs << endl;
+	ofs << "<Domain>" << std::endl;
+	ofs << "\t<Grid Name=\"TimeSeries\" GridType=\"Collection\" CollectionType=\"Temporal\">" << std::endl;
+	ofs << std::endl;
 
 	// write time steps
 	write_XDMF_timesteps(ofs);
 
 	// close grid, domain, xdmf
-	ofs << "</Grid>" << endl;
-	ofs << "</Domain>" << endl;
-	ofs << "</Xdmf>" << endl;
+	ofs << "</Grid>" << std::endl;
+	ofs << "</Domain>" << std::endl;
+	ofs << "</Xdmf>" << std::endl;
 
 	ofs.close();
 
 }
 
 void SimulationDataHDF::write_XDMF_header(ofstream & ofs){
-	ofs << "<?xml version=\"1.0\" ?>" << endl;
-	ofs << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" [" << endl;
-	ofs << "\t<!ENTITY HDF5FILE \"" << m_filename << "\">" << endl;
-	ofs << "\t<!ENTITY nvertices \"" << m_dm->nnodes() << "\">" << endl;
-	ofs << "\t<!ENTITY nelements \"" << m_dm->nelements() << "\">" << endl;
-	ofs << "\t<!ENTITY ntsteps \"" << m_time.size() << "\">" << endl;
-	ofs << "]>" << endl;
+	ofs << "<?xml version=\"1.0\" ?>" << std::endl;
+	ofs << "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" [" << std::endl;
+	ofs << "\t<!ENTITY HDF5FILE \"" << m_filename << "\">" << std::endl;
+	ofs << "\t<!ENTITY nvertices \"" << m_dm->nnodes() << "\">" << std::endl;
+	ofs << "\t<!ENTITY nelements \"" << m_dm->nelements() << "\">" << std::endl;
+	ofs << "\t<!ENTITY ntsteps \"" << m_time.size() << "\">" << std::endl;
+	ofs << "]>" << std::endl;
 }
 
 void SimulationDataHDF::write_XDMF_DataItems(ofstream & ofs){
 	// mesh data items
-	ofs << "\n\n<!--===================== Mesh Data Items ====================-->" << endl;
-	ofs << "<DataItem Name=\"NodesX\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << endl;
-	ofs << "\t&HDF5FILE;:/Mesh/Nodes/NodesX" << endl;
-	ofs << "</DataItem>" << endl;
+	ofs << "\n\n<!--===================== Mesh Data Items ====================-->" << std::endl;
+	ofs << "<DataItem Name=\"NodesX\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << std::endl;
+	ofs << "\t&HDF5FILE;:/Mesh/Nodes/NodesX" << std::endl;
+	ofs << "</DataItem>" << std::endl;
 	if (m_mesh->num_dims()>1){
-		ofs << "<DataItem Name=\"NodesY\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Mesh/Nodes/NodesY" << endl;
-		ofs << "</DataItem>" << endl;
+		ofs << "<DataItem Name=\"NodesY\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << std::endl;
+		ofs << "\t&HDF5FILE;:/Mesh/Nodes/NodesY" << std::endl;
+		ofs << "</DataItem>" << std::endl;
 	}
 	if (m_mesh->num_dims()>2){
-		ofs << "<DataItem Name=\"NodesZ\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Mesh/Nodes/NodesZ" << endl;
-		ofs << "</DataItem>" << endl;
+		ofs << "<DataItem Name=\"NodesZ\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << std::endl;
+		ofs << "\t&HDF5FILE;:/Mesh/Nodes/NodesZ" << std::endl;
+		ofs << "</DataItem>" << std::endl;
 	}
 
 	// element data items
 	string eltype = get_string(m_mesh->element(0).type());
-	ofs << "<DataItem Name=\"" << eltype << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements; " << get_nvert(m_mesh->element(0).type()) << "\">" << endl;
-	ofs << "\t&HDF5FILE;:/Mesh/Elements/" << eltype << endl;
-	ofs << "</DataItem>" << endl;
+	ofs << "<DataItem Name=\"" << eltype << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements; " << get_nvert(m_mesh->element(0).type()) << "\">" << std::endl;
+	ofs << "\t&HDF5FILE;:/Mesh/Elements/" << eltype << std::endl;
+	ofs << "</DataItem>" << std::endl;
 
 	// nodedata
 	vector<string> props = m_mesh->get_nodedata_names();
 	for (auto p=props.begin(); p!=props.end(); p++){
-		ofs << "<DataItem Name=\"" << *p << "_Node" << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Mesh/NodeData/" << *p << endl;
-		ofs << "</DataItem>" << endl;
+		ofs << "<DataItem Name=\"" << *p << "_Node" << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << std::endl;
+		ofs << "\t&HDF5FILE;:/Mesh/NodeData/" << *p << std::endl;
+		ofs << "</DataItem>" << std::endl;
 	}
 
 	// elementdata
 	vector<string> eprops = m_mesh->get_elementdata_names();
 	for (auto p=eprops.begin(); p!=eprops.end(); p++){
-		ofs << "<DataItem Name=\"" << *p << "_Cell" << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Mesh/ElementData/" << *p << endl;
-		ofs << "</DataItem>" << endl;
+		ofs << "<DataItem Name=\"" << *p << "_Cell" << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << std::endl;
+		ofs << "\t&HDF5FILE;:/Mesh/ElementData/" << *p << std::endl;
+		ofs << "</DataItem>" << std::endl;
 	}
 
 
 	// Field Data items
-	ofs << "\n\n<!--===================== Field Data Items ===================-->" << endl;
+	ofs << "\n\n<!--===================== Field Data Items ===================-->" << std::endl;
 	for (auto i=0; i<m_nodefields.size(); i++){
-		ofs << "<DataItem Name=\"" << m_nodefields[i] << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&ntsteps; &nvertices;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Fields/" << m_nodefields[i] << endl;
-		ofs << "</DataItem>" << endl;
+		ofs << "<DataItem Name=\"" << m_nodefields[i] << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&ntsteps; &nvertices;\">" << std::endl;
+		ofs << "\t&HDF5FILE;:/Fields/" << m_nodefields[i] << std::endl;
+		ofs << "</DataItem>" << std::endl;
 	}
 	for (auto i=0; i<m_elemfields.size(); i++){
-		ofs << "<DataItem Name=\"" << m_elemfields[i] << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&ntsteps; &nelements;\">" << endl;
-		ofs << "\t&HDF5FILE;:/Fields/" << m_elemfields[i] << endl;
-		ofs << "</DataItem>" << endl;
+		ofs << "<DataItem Name=\"" << m_elemfields[i] << "\" Format=\"HDF\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&ntsteps; &nelements;\">" << std::endl;
+		ofs << "\t&HDF5FILE;:/Fields/" << m_elemfields[i] << std::endl;
+		ofs << "</DataItem>" << std::endl;
 	}
 
 }
@@ -460,24 +459,24 @@ void SimulationDataHDF::write_XDMF_DataItems(ofstream & ofs){
 void SimulationDataHDF::write_XDMF_timesteps(ofstream & ofs){
 
 	for (auto i=0; i<m_time.size(); i++){
-		ofs << "<!--===========================TIME STEP=======================-->" << endl;
-		ofs << "<Grid Name=\"FDTDGrid\" GridType=\"Uniform\">" << endl;
-		ofs << "<Time Value=\"" << m_time[i] << "\"/>" << endl;
+		ofs << "<!--===========================TIME STEP=======================-->" << std::endl;
+		ofs << "<Grid Name=\"FDTDGrid\" GridType=\"Uniform\">" << std::endl;
+		ofs << "<Time Value=\"" << m_time[i] << "\"/>" << std::endl;
 
 		// topology
-		ofs << "<Topology TopologyType=\"" << xdmf_topology[(int)m_mesh->element(0).type()] << "\" NumberOfElements=\"&nelements;\">" << endl;
+		ofs << "<Topology TopologyType=\"" << xdmf_topology[(int)m_mesh->element(0).type()] << "\" NumberOfElements=\"&nelements;\">" << std::endl;
 		write_XDMF_reference(ofs, get_string(m_mesh->element(0).type()));
-		ofs << "</Topology>" << endl;
+		ofs << "</Topology>" << std::endl;
 
 		// geometry
 		if (m_mesh->num_dims()==1){
-			ofs << "<Geometry GeometryType=\"X\">" << endl;
+			ofs << "<Geometry GeometryType=\"X\">" << std::endl;
 		}
 		else if (m_mesh->num_dims() == 2){
-			ofs << "<Geometry GeometryType=\"X_Y\">" << endl;
+			ofs << "<Geometry GeometryType=\"X_Y\">" << std::endl;
 		}
 		else if (m_mesh->num_dims() == 3){
-			ofs << "<Geometry GeometryType=\"X_Y_Z\">" << endl;
+			ofs << "<Geometry GeometryType=\"X_Y_Z\">" << std::endl;
 		}
 		write_XDMF_reference(ofs, "NodesX");
 		if (m_mesh->num_dims() > 1){
@@ -486,56 +485,56 @@ void SimulationDataHDF::write_XDMF_timesteps(ofstream & ofs){
 		if (m_mesh->num_dims() > 2){
 			write_XDMF_reference(ofs, "NodesZ");
 		}
-		ofs << "</Geometry>" << endl;
+		ofs << "</Geometry>" << std::endl;
 
 		// attributes
 		vector<string> props = m_mesh->get_nodedata_names();
 		for (auto p=props.begin(); p!=props.end(); p++){
-			ofs << "<Attribute Name=\"" << *p << "\" AttributeType=\"Scalar\" Center=\"Node\">" << endl;
-			ofs << "<DataItem Reference=\"XML\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << endl;
-			ofs << "\t/Xdmf/DataItem[@Name=\"" << *p << "_Node" << "\"]" << endl;
-			ofs << "</DataItem>" << endl;
-			ofs << "</Attribute>" << endl;
+			ofs << "<Attribute Name=\"" << *p << "\" AttributeType=\"Scalar\" Center=\"Node\">" << std::endl;
+			ofs << "<DataItem Reference=\"XML\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << std::endl;
+			ofs << "\t/Xdmf/DataItem[@Name=\"" << *p << "_Node" << "\"]" << std::endl;
+			ofs << "</DataItem>" << std::endl;
+			ofs << "</Attribute>" << std::endl;
 		}
 		vector<string> eprops = m_mesh->get_elementdata_names();
 		for (auto p=eprops.begin(); p!=eprops.end(); p++){
-			ofs << "<Attribute Name=\"" << *p << "\" AttributeType=\"Scalar\" Center=\"Cell\">" << endl;
-			ofs << "<DataItem Reference=\"XML\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << endl;
-			ofs << "\t/Xdmf/DataItem[@Name=\"" << *p << "_Cell" << "\"]" << endl;
-			ofs << "</DataItem>" << endl;
-			ofs << "</Attribute>" << endl;
+			ofs << "<Attribute Name=\"" << *p << "\" AttributeType=\"Scalar\" Center=\"Cell\">" << std::endl;
+			ofs << "<DataItem Reference=\"XML\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << std::endl;
+			ofs << "\t/Xdmf/DataItem[@Name=\"" << *p << "_Cell" << "\"]" << std::endl;
+			ofs << "</DataItem>" << std::endl;
+			ofs << "</Attribute>" << std::endl;
 		}
 		for (auto f=0; f<m_nodefields.size(); f++){
-			ofs << "<Attribute Name=\"" << m_nodefields[f] << "\" AttributeType=\"Scalar\" Center=\"Node\">" << endl;
-			ofs << "<DataItem ItemType=\"HyperSlab\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << endl;
-			ofs << "<DataItem Dimensions=\"3 2\" Format=\"XML\">" << endl;
-			ofs << i << " 0" << endl;
-			ofs << "1 1" << endl;
-			ofs << "1 &nvertices;" << endl;
-			ofs << "</DataItem>" << endl;
+			ofs << "<Attribute Name=\"" << m_nodefields[f] << "\" AttributeType=\"Scalar\" Center=\"Node\">" << std::endl;
+			ofs << "<DataItem ItemType=\"HyperSlab\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nvertices;\">" << std::endl;
+			ofs << "<DataItem Dimensions=\"3 2\" Format=\"XML\">" << std::endl;
+			ofs << i << " 0" << std::endl;
+			ofs << "1 1" << std::endl;
+			ofs << "1 &nvertices;" << std::endl;
+			ofs << "</DataItem>" << std::endl;
 			write_XDMF_reference(ofs, m_nodefields[f]);
-			ofs << "</DataItem>" << endl;
-			ofs << "</Attribute>" << endl;
+			ofs << "</DataItem>" << std::endl;
+			ofs << "</Attribute>" << std::endl;
 		}
 		for (auto f=0; f<m_elemfields.size(); f++){
-			ofs << "<Attribute Name=\"" << m_elemfields[f] << "\" AttributeType=\"Scalar\" Center=\"Cell\">" << endl;
-			ofs << "<DataItem ItemType=\"HyperSlab\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << endl;
-			ofs << "<DataItem Dimensions=\"3 2\" Format=\"XML\">" << endl;
-			ofs << i << " 0" << endl;
-			ofs << "1 1" << endl;
-			ofs << "1 &nelements;" << endl;
-			ofs << "</DataItem>" << endl;
+			ofs << "<Attribute Name=\"" << m_elemfields[f] << "\" AttributeType=\"Scalar\" Center=\"Cell\">" << std::endl;
+			ofs << "<DataItem ItemType=\"HyperSlab\" NumberType=\"Float\" Precision=\"8\" Dimensions=\"&nelements;\">" << std::endl;
+			ofs << "<DataItem Dimensions=\"3 2\" Format=\"XML\">" << std::endl;
+			ofs << i << " 0" << std::endl;
+			ofs << "1 1" << std::endl;
+			ofs << "1 &nelements;" << std::endl;
+			ofs << "</DataItem>" << std::endl;
 			write_XDMF_reference(ofs, m_elemfields[f]);
-			ofs << "</DataItem>" << endl;
-			ofs << "</Attribute>" << endl;
+			ofs << "</DataItem>" << std::endl;
+			ofs << "</Attribute>" << std::endl;
 		}
-		ofs << "</Grid>" << endl;
+		ofs << "</Grid>" << std::endl;
 
 	}
 }
 
 void SimulationDataHDF::write_XDMF_reference(ofstream & ofs, string refname){
-	ofs << "<DataItem Reference=\"XML\">" << endl;
-	ofs << "\t/Xdmf/DataItem[@Name=\"" << refname << "\"]" << endl;
-	ofs << "</DataItem>" << endl;
+	ofs << "<DataItem Reference=\"XML\">" << std::endl;
+	ofs << "\t/Xdmf/DataItem[@Name=\"" << refname << "\"]" << std::endl;
+	ofs << "</DataItem>" << std::endl;
 }
