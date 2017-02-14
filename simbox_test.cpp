@@ -4,6 +4,7 @@
 #include "include/Mesh3D.hpp"
 #include "include/Mesh2D.hpp"
 #include "include/RegularMesh3D.hpp"
+#include "include/RegularMesh2D.hpp"
 
 #include "include/SignalGenerator.hpp"
 #include "include/SignalProcessing.hpp"
@@ -54,6 +55,11 @@ int main(int argc, char * argv[]){
   mesh2->print_summary();
   cout << "succeeded" << endl;
 
+  cout << "testing 2D regularmesh" << endl;
+  auto rmesh2 = simbox::RegularMesh2D::generate({20,20},{0.05,0.05},{0,0});
+  rmesh2->print_summary();
+  cout << "succeeded" << endl;
+
   cout << "attempting to initialize MPI..." << endl;
   mpi::init(&argc, &argv);
   cout << "done" << endl;
@@ -64,6 +70,8 @@ int main(int argc, char * argv[]){
   sdH5.add_elemfield("Caca");
   sdH5.print_summary();
   sdH5.write_XDMF();
+
+  cout << "finito" << endl;
 
   return 0;
 }

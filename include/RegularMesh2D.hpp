@@ -1,17 +1,17 @@
-/** @file RegularMesh3D.hpp
- *  @brief file with 3D RegularMesh class
+/** @file RegularMesh2D.hpp
+ *  @brief file with 2D RegularMesh class
  *
- *  This contains the RegularMesh3D class
+ *  This contains the RegularMesh2D class
  *  and associated functions, defs, and enums
  *
  *  @author D. Pederson
  *  @bug No known bugs.
  */
 
-#ifndef _REGULARMESH3D_H
-#define _REGULARMESH3D_H
+#ifndef _REGULARMESH2D_H
+#define _REGULARMESH2D_H
 
-#include "Mesh3D.hpp"
+#include "Mesh2D.hpp"
 
 namespace simbox{
 
@@ -21,21 +21,21 @@ namespace simbox{
 
 
 
-/** @class RegularMesh3D
- *  @brief a regular mesh in 3 dimensions
+/** @class RegularMesh2D
+ *  @brief a regular mesh in 2 dimensions
  *
  *  an orthogonal mesh with a constant dx in every dimension
  *
  */
 
-class RegularMesh3D : public Mesh3D{
+class RegularMesh2D : public Mesh2D{
 public:
   // constructor
-  RegularMesh3D()
-  : Mesh3D() {};
+  RegularMesh2D()
+  : Mesh2D() {};
 
   // copy constructor
-  // RegularMesh3D(const Mesh3D & mesh);
+  // RegularMesh2D(const Mesh2D & mesh);
 
   // inspectors
   // return the nodecount in a given direction
@@ -48,26 +48,26 @@ public:
   double dx(unsigned int dir) const {return m_dx.x[dir];};
 
   // return the index to the serialized array of nodes
-  unsigned int node_serial_index(const iNode<3> & i) const {
+  unsigned int node_serial_index(const iNode<2> & i) const {
     // uint64_t answer = 0;
     // answer |= split3(i.ind[0]) | split3(i.ind[1]) << 1 | split3(i.ind[2]) << 2;
     // return answer;
-    return i.ind[2]*(m_numnodes.ind[0]*m_numnodes.ind[1]) + i.ind[1]*m_numnodes.ind[0] + i.ind[0];
+    return i.ind[1]*m_numnodes.ind[0] + i.ind[0];
   }
 
   // return the index to the serialized array of elements
-  unsigned int element_serial_index(const iNode<3> & i) const {
+  unsigned int element_serial_index(const iNode<2> & i) const {
     // uint64_t answer = 0;
     // answer |= split3(i.ind[0]) | split3(i.ind[1]) << 1 | split3(i.ind[2]) << 2;
     // return answer;
-    return i.ind[2]*(m_numnodes.ind[0]-1)*(m_numnodes.ind[1]-1) + i.ind[1]*(m_numnodes.ind[0]-1) + i.ind[0];
+    return i.ind[1]*(m_numnodes.ind[0]-1) + i.ind[0];
   }
 
   // // return the array index point of a serialized node index
-  // iNode<3> node_array_index(unsigned int i) const {;};
+  // iNode<2> node_array_index(unsigned int i) const {;};
 
   // // return the array index point of a serialized element index
-  // iNode<3> element_array_index(unsigned int i) const {;};
+  // iNode<2> element_array_index(unsigned int i) const {;};
 
 
   // get neighbor node
@@ -77,7 +77,7 @@ public:
   // unsigned int neighbor_element(unsigned int nind, Direction d) const;
 
   // overload the nearest node operator
-  unsigned int nearest_node(const Node<3> & nd) const{
+  unsigned int nearest_node(const Node<2> & nd) const{
     unsigned int x,y,z;
     x = (unsigned int)(double(m_numnodes.ind[0]-1)*(nd.x[0]-m_minpt.x[0])/(m_maxpt.x[0]-m_minpt.x[0]));
     y = (unsigned int)(double(m_numnodes.ind[1])*(nd.x[1]-m_minpt.x[1])/(m_maxpt.x[1]-m_minpt.x[1]));
@@ -88,16 +88,16 @@ public:
   // overload the nearest element operator
   
   // grid generation
-  static std::shared_ptr<RegularMesh3D> generate(iNode<3> npts, Node<3> dx, Node<3> minpt){
-    std::shared_ptr<RegularMesh3D> msh(new RegularMesh3D());
+  static std::shared_ptr<RegularMesh2D> generate(iNode<2> npts, Node<2> dx, Node<2> minpt){
+    std::shared_ptr<RegularMesh2D> msh(new RegularMesh2D());
     msh->generate_internal(npts, dx, minpt);
     return msh;
   }
 
 protected:
 
-  iNode<3>            m_numnodes;
-  Node<3>             m_dx;
+  iNode<2>            m_numnodes;
+  Node<2>             m_dx;
 
 
   // utility for Morton ordering
@@ -113,55 +113,39 @@ protected:
   }
 
 
-  void generate_internal(iNode<3> npts, Node<3> dx, Node<3> minpt){
+  void generate_internal(iNode<2> npts, Node<2> dx, Node<2> minpt){
     
     // handle metadata
     m_mesh_type = REGULAR;
     m_numnodes = npts;
     m_dx = dx;
     m_minpt = minpt;
-    m_maxpt = minpt + Node<3>(dx.x[0]*(npts.ind[0]-1), dx.x[1]*(npts.ind[1]-1), dx.x[2]*(npts.ind[2]-1));
+    m_maxpt = minpt + Node<2>(dx.x[0]*(npts.ind[0]-1), dx.x[1]*(npts.ind[1]-1));
 
     // create nodes
-    m_snodes.resize(npts.ind[0]*npts.ind[1]*npts.ind[2]);
+    m_snodes.resize(npts.ind[0]*npts.ind[1]);
     unsigned int glidx;
     for (auto i=0; i<npts.ind[0]; i++){
       for (auto j=0; j<npts.ind[1]; j++){
-        for (auto k=0; k<npts.ind[2]; k++){
-          glidx = node_serial_index({i,j,k});
-          m_snodes[glidx] = m_minpt + Node<3>(i*dx.x[0], j*dx.x[1], k*dx.x[2]);
-        }
+        glidx = node_serial_index({i,j});
+        m_snodes[glidx] = m_minpt + Node<2>(i*dx.x[0], j*dx.x[1]);
       }
     }
 
     // create elements
-    unsigned int blf, tlf, brf, trf, blb, tlb, brb, trb;
-    m_selements.resize((npts.ind[0]-1)*(npts.ind[1]-1)*(npts.ind[2]-1));
+    unsigned int bl, tl, br, tr;
+    m_selements.resize((npts.ind[0]-1)*(npts.ind[1]-1));
     for (auto i=0; i<npts.ind[0]-1; i++){
       for (auto j=0; j<npts.ind[1]-1; j++){
-        for (auto k=0; k<npts.ind[2]-1; k++){
-          glidx = element_serial_index({i,j,k});
+        glidx = element_serial_index({i,j});
 
-          // blf = (nex+1)*(ney+1)*(i) + (nex+1)*(j) + k;
-          blf = node_serial_index({i,j,k});
-          // brf = (nex+1)*(ney+1)*(i) + (nex+1)*(j) + k+1;
-          brf = node_serial_index({i,j,k+1});
-          // trf = (nex+1)*(ney+1)*(i) + (nex+1)*(j+1) + k+1;
-          trf = node_serial_index({i,j+1,k+1});
-          // tlf = (nex+1)*(ney+1)*(i) + (nex+1)*(j+1) + k;
-          tlf = node_serial_index({i,j+1,k});
-          // blb = (nex+1)*(ney+1)*(i+1) + (nex+1)*(j) + k;
-          blb = node_serial_index({i+1,j,k});
-          // brb = (nex+1)*(ney+1)*(i+1) + (nex+1)*(j) + k+1;
-          brb = node_serial_index({i+1,j,k+1});
-          // trb = (nex+1)*(ney+1)*(i+1) + (nex+1)*(j+1) + k+1;
-          trb = node_serial_index({i+1,j+1,k+1});
-          // tlb = (nex+1)*(ney+1)*(i+1) + (nex+1)*(j+1) + k;
-          tlb = node_serial_index({i+1,j+1,k});
+        bl = node_serial_index({i,j});
+        br = node_serial_index({i+1,j});
+        tr = node_serial_index({i+1,j+1});
+        tl = node_serial_index({i,j+1});
 
-          m_selements[glidx].nodeinds = {blf,brf,trf,tlf,blb,brb,trb,tlb};
-          m_selements[glidx].type = ElementType::HEX_8;
-        }
+        m_selements[glidx].nodeinds = {bl,br,tr,tl};
+        m_selements[glidx].type = ElementType::QUAD_4;
       }
     }
   }
