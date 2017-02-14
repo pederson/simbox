@@ -3,6 +3,7 @@
 #include "include/Mesh.hpp"
 #include "include/Mesh3D.hpp"
 #include "include/Mesh2D.hpp"
+#include "include/RegularMesh3D.hpp"
 
 #include "include/SignalGenerator.hpp"
 #include "include/SignalProcessing.hpp"
@@ -23,7 +24,7 @@ public:
 	unsigned int elementcount(int proc) const {return 8656;};
 	unsigned int nodecount() const {return 4325;};
 	unsigned int elementcount() const {return 8656;};
-	unsigned int numprocs() const {return 1;};
+	unsigned int numprocs() const {return mpi::size();};
 };
 
 using namespace std;
@@ -40,6 +41,11 @@ int main(int argc, char * argv[]){
   cout << "testing 3D mesh" << endl;
   auto mesh3 = simbox::Mesh3D::read_MSH("data/channel.msh");
   mesh3->print_summary();
+  cout << "succeeded" << endl;
+
+  cout << "testing 3D regularmesh" << endl;
+  auto rmesh3 = simbox::RegularMesh3D::generate({20,20,20},{0.05,0.05,0.05},{0,0,0});
+  rmesh3->print_summary();
   cout << "succeeded" << endl;
 
 
