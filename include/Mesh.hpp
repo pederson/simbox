@@ -322,6 +322,25 @@ public:
 
 
 
+
+/** @class PointQueryObject
+ *  @brief an object that returns a value given a point query
+ *
+ *  abstract object that returns a
+ *  value given a query point. Basically
+ *  this can be used to wrap a geometric 
+ *  object
+ *
+ */
+template<std::size_t dim>
+class PointQueryObject {
+public:
+  virtual double query(const Node<dim> & nd) const;
+};
+
+
+
+
 /** @class Mesh
  *  @brief a mesh in 1, 2, or 3 dimensions
  *
@@ -443,6 +462,15 @@ public:
     m_nodedata[property_name] = prop;
   }
 
+  // add nodedata by point query
+  void add_nodedata(std::string name, const PointQueryObject<dim> & pqo){
+    std::vector<double> prop(m_snodes.size());
+    for (auto i=0; i<m_snodes.size(); i++){
+      prop[i] = pqo.query(m_snodes[i]);
+    }
+    m_nodedata[name] = prop;
+  }
+
   void add_elementdata(std::string property_name, const double * values){
     std::vector<double> prop;
     prop.assign(m_selements.size(), 0.0);
@@ -455,6 +483,43 @@ public:
     prop.assign(m_selements.size(), init_val);
     m_elementdata[property_name] = prop;
   }
+
+  // add elementdata by point query at center of element
+  void add_elementdata_center(std::string name, const PointQueryObject<dim> & pqo){
+    std::vector<double> prop(m_selements.size());
+    for (auto i=0; i<m_selements.size(); i++){
+      Node<dim> center = m_selements[i].nodeinds[0];
+      for (auto j=1; j<m_selements[i].nodeinds.size(); j++) center = center + m_selements[i].nodeinds[j];
+      center = 1.0/(m_selements[i].nodeinds.size())*center;  
+      prop[i] = pqo.query(center);
+    }
+    m_elementdata[name] = prop;
+  }
+
+  // add elementdata by averaging the values at the nodes
+  void add_elementdata_avg(std::string name, const PointQueryObject<dim> & pqo){
+    std::vector<double> prop(m_selements.size());
+    for (auto i=0; i<m_selements.size(); i++){
+      double val = pqo.query(m_selements[i].nodeinds[0]);
+      for (auto j=1; j<m_selements[i].nodeinds.size(); j++) val += pqo.query(m_selements[i].nodeinds[j]);
+      val /= m_selements[i].nodeinds.size();  
+      prop[i] = val;
+    }
+    m_elementdata[name] = prop;
+  }
+
+  // // add elementdata by the mode of the values at the nodes
+  // void add_elementdata_mode(std::string name, const PointQueryObject<dim> & pqo){
+  //   std::vector<double> prop(m_selements.size());
+  //   for (auto i=0; i<m_selements.size(); i++){
+  //     double val = pqo.query(m_selements[i].nodeinds[0]);
+  //     for (auto j=1; j<m_selements[i].nodeinds.size(); j++) val += pqo.query(m_selements[i].nodeinds[j]);
+  //     val /= m_selements[i].nodeinds.size();  
+  //     prop[i] = val;
+  //   }
+  //   m_elementdata[name] = prop;
+  // }
+
 
   void set_nodedata(std::string property_name, unsigned int i, double val){m_nodedata.at(property_name).at(i) = val;};
 
@@ -508,6 +573,7 @@ protected:
   std::map<std::string, std::vector<double>>      m_elementdata;
 
 };
+
 
 }
 #endif

@@ -18,6 +18,19 @@ namespace simbox{
 
 
 
+/** @class PointQueryObject2D
+ *  @brief an object that returns an index given a point query
+ *
+ *  abstract object that returns an
+ *  index given a query point. Basically
+ *  this can be used to wrap a geometric 
+ *  object
+ *
+ */
+class PointQueryObject2D : public PointQueryObject<2>{};
+
+
+
 
 /** @class Mesh2D
  *  @brief a mesh in 2 dimensions

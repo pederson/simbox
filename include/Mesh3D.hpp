@@ -17,6 +17,18 @@ namespace simbox{
 
 
 
+/** @class PointQueryObject3D
+ *  @brief an object that returns an index given a point query
+ *
+ *  abstract object that returns an
+ *  index given a query point. Basically
+ *  this can be used to wrap a geometric 
+ *  object
+ *
+ */
+class PointQueryObject3D : public PointQueryObject<3>{};
+
+
 
 /** @class Mesh3D
  *  @brief a mesh in 3 dimensions
@@ -38,6 +50,15 @@ public:
   
   // grid generation and refinement
   //static Mesh create_unstructured_tri_simple();
+
+  // add nodedata by point query
+  void add_nodedata(std::string name, const PointQueryObject3D & pqo){
+    std::vector<double> prop(m_snodes.size());
+    for (auto i=0; i<m_snodes.size(); i++){
+      prop[i] = pqo.query(m_snodes[i]);
+    }
+    m_nodedata[name] = prop;
+  }
 
   // reading and writing files
   static std::shared_ptr<Mesh3D> read_MSH(std::string filename);

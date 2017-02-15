@@ -28,6 +28,11 @@ public:
 	unsigned int numprocs() const {return mpi::size();};
 };
 
+class Halfspace : public simbox::PointQueryObject<2>{
+  double query(const simbox::Node<2> & nd) const {return (nd.x[0] > 0.5? -1: 1);};
+};
+
+
 using namespace std;
 
 int main(int argc, char * argv[]){
@@ -50,8 +55,11 @@ int main(int argc, char * argv[]){
   cout << "succeeded" << endl;
 
 
+  Halfspace hf;
   cout << "testing 2D mesh" << endl;
   auto mesh2 = simbox::Mesh2D::read_MSH("data/channel.msh");
+  mesh2->add_nodedata("id",hf);
+  mesh2->add_elementdata_center("id",hf);
   mesh2->print_summary();
   cout << "succeeded" << endl;
 
