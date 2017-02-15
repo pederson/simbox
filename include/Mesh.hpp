@@ -26,6 +26,8 @@
 
 namespace simbox{
 
+enum class Direction : unsigned int{X=0,Y,Z};
+
 // these enums follow closely to the MSH format
 // http://www.manpagez.com/info/gmsh/gmsh-2.2.6/gmsh_63.php
 enum MeshType{REGULAR=0, UNSTRUCTURED_TRI=1, UNSTRUCTURED_QUAD=2, UNSTRUCTURED_MIXED=3, MESH_UNKNOWN};

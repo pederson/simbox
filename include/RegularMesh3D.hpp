@@ -63,18 +63,41 @@ public:
     return i.ind[2]*(m_numnodes.ind[0]-1)*(m_numnodes.ind[1]-1) + i.ind[1]*(m_numnodes.ind[0]-1) + i.ind[0];
   }
 
-  // // return the array index point of a serialized node index
-  // iNode<3> node_array_index(unsigned int i) const {;};
+  // return the array index point of a serialized node index
+  iNode<3> node_array_index(unsigned int i) const {;};
 
-  // // return the array index point of a serialized element index
-  // iNode<3> element_array_index(unsigned int i) const {;};
+  // return the array index point of a serialized element index
+  iNode<3> element_array_index(unsigned int i) const {;};
 
 
-  // get neighbor node
-  // unsigned int neighbor_node(unsigned int nind, Direction d) const;
+  // get neighbor node on the min side in a given direction
+  unsigned int neighbor_node_min(unsigned int nind, Direction d) const{
+    iNode<3> in = node_array_index(nind);
+    in.ind[(unsigned int)d] -= 1;
+    return node_serial_index(in);
+  }
 
-  // get neighbor element
-  // unsigned int neighbor_element(unsigned int nind, Direction d) const;
+  // get neighbor node on the max side in a given direction
+  unsigned int neighbor_node_max(unsigned int nind, Direction d) const{
+    iNode<3> in = node_array_index(nind);
+    in.ind[(unsigned int)d] += 1;
+    return node_serial_index(in);
+  }
+
+  // get neighbor element on the min side in a given direction
+  unsigned int neighbor_element_min(unsigned int nind, Direction d) const{
+    iNode<3> in = element_array_index(nind);
+    in.ind[(unsigned int)d] -= 1;
+    return element_serial_index(in);
+  }
+ 
+  // get neighbor element on the max side in a given direction
+  unsigned int neighbor_element_max(unsigned int nind, Direction d) const{
+    iNode<3> in = element_array_index(nind);
+    in.ind[(unsigned int)d] += 1;
+    return element_serial_index(in);
+  }
+
 
   // overload the nearest node operator
   unsigned int nearest_node(const Node<3> & nd) const{
