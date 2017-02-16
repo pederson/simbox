@@ -16,6 +16,127 @@
 namespace simbox{
 
 
+enum class Direction : unsigned int{X=0,Y,Z};
+
+
+
+
+
+/** @class iNode
+ *  @brief a single index node
+ *
+ *  an node of indices in <dim> dimensions 
+ *
+ */
+template<std::size_t dim>
+class iNode{
+public:
+  // data
+  unsigned int          ind[dim];
+
+
+  // constructor
+  iNode(unsigned int i0=0.0, unsigned int i1=0.0, unsigned int i2=0.0){
+    ind[0] = i0;
+    if (dim > 1) ind[1] = i1;
+    if (dim > 2) ind[2] = i2;
+    if (dim > 3){
+      std::cerr << "iNode: That constructor not implemented for dim > 3" << std::endl;
+      throw -1;
+    }
+  }
+  
+  // constructor
+  iNode(std::vector<unsigned int> indi){
+    for (auto i=0; i<indi.size(); i++) ind[i] = indi[i];
+  }
+
+  // copy constructor
+  iNode(const iNode & p){
+    for (auto i=0; i<dim; i++) ind[i] = p.ind[i];
+  }
+
+  // assignment
+  iNode & operator= (const iNode & p){
+    for (auto i=0; i<dim; i++) ind[i] = p.ind[i];
+    return *this;
+  }
+
+  // addition
+  iNode operator+ (const iNode & p) const{
+    iNode out(p);
+    for (auto i=0; i<dim; i++) out.ind[i] = ind[i] + p.ind[i];
+    return out;
+  }
+
+  // subtraction
+  iNode operator- (const iNode & p) const{
+    iNode out(p);
+    for (auto i=0; i<dim; i++) out.ind[i] = ind[i] - p.ind[i];
+    return out;
+  }
+
+  // scalar multiplication
+  iNode operator* (double val) const{
+    iNode out(*this);
+    for (auto i=0; i<dim; i++) out.ind[i] = val*ind[i];
+    return out;
+  }
+
+  // comparison
+  bool operator== (const iNode & p) const {
+    for (auto i=0; i<dim; i++) if (ind[i] != p.ind[i]) return false;
+    return true;
+  }
+
+  static double dist(const iNode & p1, const iNode & p2){
+    double dsq = 0.0;
+    for (auto i=0; i<dim; i++) dsq += (p1.ind[i] - p2.ind[i])*(p1.ind[i] - p2.ind[i]);
+    return sqrt(dsq);
+  }
+
+  // 1 norm
+  static double dist1(const iNode & p1, const iNode & p2){
+    double dsq = 0.0;
+    for (auto i=0; i<dim; i++) dsq += fabs(p1.ind[i] - p2.ind[i]);
+    return dsq;
+  }
+
+  static double distsq(const iNode & p1, const iNode & p2){
+    double dsq = 0.0;
+    for (auto i=0; i<dim; i++) dsq += (p1.ind[i] - p2.ind[i])*(p1.ind[i] - p2.ind[i]);
+    return dsq;
+  }
+
+  static double dot(const iNode & p1, const iNode & p2){
+    double dt = 0.0;
+    for (auto i=0; i<dim; i++) dt += p1.ind[i]*p2.ind[i];
+    return dt;
+  }
+
+  // print to std::out
+  template<std::size_t d>
+  friend std::ostream & operator<<(std::ostream & os, const iNode<d> & p);
+
+};
+
+template<std::size_t dim>
+std::ostream & operator<<(std::ostream & os, const iNode<dim> & p){
+  os << "(" ;
+  for (auto i=0; i< dim-1; i++) os << p.ind[i] << ", " ;
+  os << p.ind[dim-1] << ")" ;
+  
+  return os;
+}
+
+template<std::size_t dim>
+iNode<dim> operator*(double val, const iNode<dim> & p){
+  iNode<dim> out(p);
+  for (auto i=0; i<dim; i++) out.ind[i] = val*p.ind[i];
+  return out;
+}
+
+
 
 
 /** @class RegularMesh
