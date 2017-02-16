@@ -11,7 +11,7 @@
 #ifndef _REGULARMESH3D_H
 #define _REGULARMESH3D_H
 
-#include "Mesh3D.hpp"
+#include "RegularMesh.hpp"
 
 namespace simbox{
 
@@ -28,88 +28,17 @@ namespace simbox{
  *
  */
 
-class RegularMesh3D : public Mesh3D{
+class RegularMesh3D : public RegularMesh<3>{
 public:
   // constructor
   RegularMesh3D()
-  : Mesh3D() {};
+  : RegularMesh<3>() {};
 
   // copy constructor
   // RegularMesh3D(const Mesh3D & mesh);
 
   // inspectors
-  // return the nodecount in a given direction
-  unsigned int nodecount(unsigned int dir) const {return m_numnodes.ind[dir];};
 
-  // return the elementcount in a given direction
-  unsigned int elementcount(unsigned int dir) const {return m_numnodes.ind[dir]-1;};
-
-  // return the dx in a given direction
-  double dx(unsigned int dir) const {return m_dx.x[dir];};
-
-  // return the index to the serialized array of nodes
-  unsigned int node_serial_index(const iNode<3> & i) const {
-    // uint64_t answer = 0;
-    // answer |= split3(i.ind[0]) | split3(i.ind[1]) << 1 | split3(i.ind[2]) << 2;
-    // return answer;
-    return i.ind[2]*(m_numnodes.ind[0]*m_numnodes.ind[1]) + i.ind[1]*m_numnodes.ind[0] + i.ind[0];
-  }
-
-  // return the index to the serialized array of elements
-  unsigned int element_serial_index(const iNode<3> & i) const {
-    // uint64_t answer = 0;
-    // answer |= split3(i.ind[0]) | split3(i.ind[1]) << 1 | split3(i.ind[2]) << 2;
-    // return answer;
-    return i.ind[2]*(m_numnodes.ind[0]-1)*(m_numnodes.ind[1]-1) + i.ind[1]*(m_numnodes.ind[0]-1) + i.ind[0];
-  }
-
-  // return the array index point of a serialized node index
-  iNode<3> node_array_index(unsigned int i) const {;};
-
-  // return the array index point of a serialized element index
-  iNode<3> element_array_index(unsigned int i) const {;};
-
-
-  // get neighbor node on the min side in a given direction
-  unsigned int neighbor_node_min(unsigned int nind, Direction d) const{
-    iNode<3> in = node_array_index(nind);
-    in.ind[(unsigned int)d] -= 1;
-    return node_serial_index(in);
-  }
-
-  // get neighbor node on the max side in a given direction
-  unsigned int neighbor_node_max(unsigned int nind, Direction d) const{
-    iNode<3> in = node_array_index(nind);
-    in.ind[(unsigned int)d] += 1;
-    return node_serial_index(in);
-  }
-
-  // get neighbor element on the min side in a given direction
-  unsigned int neighbor_element_min(unsigned int nind, Direction d) const{
-    iNode<3> in = element_array_index(nind);
-    in.ind[(unsigned int)d] -= 1;
-    return element_serial_index(in);
-  }
- 
-  // get neighbor element on the max side in a given direction
-  unsigned int neighbor_element_max(unsigned int nind, Direction d) const{
-    iNode<3> in = element_array_index(nind);
-    in.ind[(unsigned int)d] += 1;
-    return element_serial_index(in);
-  }
-
-
-  // overload the nearest node operator
-  unsigned int nearest_node(const Node<3> & nd) const{
-    unsigned int x,y,z;
-    x = (unsigned int)(double(m_numnodes.ind[0]-1)*(nd.x[0]-m_minpt.x[0])/(m_maxpt.x[0]-m_minpt.x[0]));
-    y = (unsigned int)(double(m_numnodes.ind[1])*(nd.x[1]-m_minpt.x[1])/(m_maxpt.x[1]-m_minpt.x[1]));
-    z = (unsigned int)(double(m_numnodes.ind[2])*(nd.x[2]-m_minpt.x[2])/(m_maxpt.x[2]-m_minpt.x[2]));
-    return node_serial_index({x,y,z});
-  }
-
-  // overload the nearest element operator
-  
   // grid generation
   static std::shared_ptr<RegularMesh3D> generate(iNode<3> npts, Node<3> dx, Node<3> minpt){
     std::shared_ptr<RegularMesh3D> msh(new RegularMesh3D());
@@ -118,10 +47,6 @@ public:
   }
 
 protected:
-
-  iNode<3>            m_numnodes;
-  Node<3>             m_dx;
-
 
   // utility for Morton ordering
   // separates bits from a given integer 3 positions apart 

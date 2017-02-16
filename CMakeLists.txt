@@ -25,7 +25,7 @@ SET(INCL_FOLDER "./include")
 
 
 ## UNCOMMENT THIS FOR DESKTOP COMPILE #############
-SET(HDF5_DIR "~/GitProjects/plasmeta/libs/HDF5-1.8.16-Linux/HDF_Group/HDF5/1.8.16/share/cmake")
+SET(HDF5_DIR "~/GitRepos/plasmeta/libs/HDF5-1.8.16-Linux/HDF_Group/HDF5/1.8.16/share/cmake")
 SET(CMAKE_CXX_COMPILER "/usr/bin/mpicxx")
 SET(CMAKE_CXX_FLAGS "-std=c++11 -O2 -w -Wall -Werror")
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules/")

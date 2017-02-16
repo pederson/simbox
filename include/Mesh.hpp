@@ -414,7 +414,7 @@ public:
   // unsigned int dedgecount() const {return m_dedges.size();};
   unsigned int delementcount() const {return m_delements.size();};
 
-  unsigned int nearest_node(const Node<dim> & n) const{
+  virtual unsigned int nearest_node(const Node<dim> & n) const{
     double dsq = Node<dim>::distsq(n,m_snodes[0]);
     unsigned int minloc = 0;
     double minval = dsq;

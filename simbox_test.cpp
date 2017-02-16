@@ -3,6 +3,8 @@
 #include "include/Mesh.hpp"
 #include "include/Mesh3D.hpp"
 #include "include/Mesh2D.hpp"
+
+#include "include/RegularMesh.hpp"
 #include "include/RegularMesh3D.hpp"
 #include "include/RegularMesh2D.hpp"
 
@@ -41,18 +43,18 @@ int main(int argc, char * argv[]){
   cout << "testing mesh constructor..." << std::endl;
   simbox::Mesh<2> * mymesh = new simbox::Mesh<2>();
   mymesh->print_summary();
-  cout << "succeeded" << endl;
+  cout << "succeeded\n" << endl;
 
 
   cout << "testing 3D mesh" << endl;
   auto mesh3 = simbox::Mesh3D::read_MSH("data/channel.msh");
   mesh3->print_summary();
-  cout << "succeeded" << endl;
+  cout << "succeeded\n" << endl;
 
   cout << "testing 3D regularmesh" << endl;
   auto rmesh3 = simbox::RegularMesh3D::generate({20,20,20},{0.05,0.05,0.05},{0,0,0});
   rmesh3->print_summary();
-  cout << "succeeded" << endl;
+  cout << "succeeded\n" << endl;
 
 
   Halfspace hf;
@@ -61,16 +63,16 @@ int main(int argc, char * argv[]){
   mesh2->add_nodedata("id",hf);
   mesh2->add_elementdata_center("id",hf);
   mesh2->print_summary();
-  cout << "succeeded" << endl;
+  cout << "succeeded\n" << endl;
 
   cout << "testing 2D regularmesh" << endl;
   auto rmesh2 = simbox::RegularMesh2D::generate({20,20},{0.05,0.05},{0,0});
   rmesh2->print_summary();
-  cout << "succeeded" << endl;
+  cout << "succeeded\n" << endl;
 
   cout << "attempting to initialize MPI..." << endl;
   mpi::init(&argc, &argv);
-  cout << "done" << endl;
+  cout << "done\n" << endl;
 
   DomainOf1 dom3;
   simbox::SimulationDataHDF<3> sdH5("H5Data.h5", dom3, mesh3, {0.0,1.0});
@@ -79,7 +81,7 @@ int main(int argc, char * argv[]){
   sdH5.print_summary();
   sdH5.write_XDMF();
 
-  cout << "finito" << endl;
-
+  cout << "\nfinito" << endl;
+  mpi::finalize();
   return 0;
 }
