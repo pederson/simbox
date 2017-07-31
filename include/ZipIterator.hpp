@@ -164,16 +164,12 @@ public:
 
 	// inequality
 	bool operator!=(const self_type & leaf) const {
-		bool res=true;
-		Detail::for_each(mtup, leaf.mtup, [&res](auto & t1, auto & t2){res = res && (t1!=t2);});
-		return res;
+		return mtup != leaf.mtup;
 	};
 
 	// equality
 	bool operator==(const self_type & leaf) const {
-		bool res=true;
-		Detail::for_each(mtup, leaf.mtup, [&res](auto & t1, auto & t2){res = res && (t1==t2);});
-		return res;
+		return mtup == leaf.mtup;
 	};
 
 
