@@ -70,6 +70,12 @@ public:
 	void write_buffer(Args... args){
 		WriterPolicy::write(&*BufferPolicy::begin(), BufferPolicy::size(), args...);
 	};
+
+
+	template <typename... Args>
+	void read_buffer(Args... args){
+		WriterPolicy::read(&*BufferPolicy::begin(), BufferPolicy::size(), args...);
+	};
 };
 
 
@@ -88,8 +94,7 @@ public:
 	template <typename T, typename... Args>
 	bool write(T * data, std::size_t length, Args... args){
 		std::ofstream str;
-		std::cout << mFolderName+"/"+getFilepath(mFolderName, args...) << std::endl;
-		// throw -1;
+		// std::cout << mFolderName+"/"+getFilepath(mFolderName, args...) << std::endl;
 		str.open(mFolderName+"/"+getFilepath(mFolderName, args...), std::ofstream::out | std::ofstream::trunc);
 		if (!str.is_open()){
 			std::cout << "error opening file for write" << std::endl;
@@ -98,6 +103,22 @@ public:
 
 		for (auto i=0; i<length; i++){
 			str << data[i] << "\n";
+		}
+		return true;
+	}
+
+
+	template <typename T, typename... Args>
+	bool read(T * target, std::size_t length, Args... args){
+		std::ifstream str;
+		str.open(mFolderName+"/"+getFilepath(mFolderName, args...), std::ifstream::in);
+		if (!str.is_open()){
+			std::cout << "error opening file for read" << std::endl;
+			return false;
+		}
+
+		for (auto i=0; i<length; i++){
+			str >> target[i];
 		}
 		return true;
 	}
