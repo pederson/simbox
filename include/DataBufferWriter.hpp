@@ -22,6 +22,7 @@
 // c++17 <filesystem> library
 /////////////////////////////////
 #include <sys/stat.h>
+#include <dirent.h>
 /////////////////////////////////
 
 // #include <experimental/filesystem>
@@ -37,9 +38,10 @@ void make_directory(std::string path){
 	mkdir(path.c_str(), 0700);
 }
 
-// bool check_directory(std::string path){
-
-// }
+bool check_directory(std::string path){
+	if (opendir(path.c_str()) == nullptr) return false;
+	return true;
+}
 
 
 /** @class DataBufferWriter
@@ -84,10 +86,11 @@ public:
 	// here, the Args arguments specify the path to the file
 	// in which we want to read/write
 	template <typename T, typename... Args>
-	bool write(T * data, std::size_t length, Args... args, std::string filename){
+	bool write(T * data, std::size_t length, Args... args){
 		std::ofstream str;
-		std::cout << getFilepath(args..., filename) << std::endl;
-		str.open(mFolderName+"/"+getFilepath(args..., filename), std::ofstream::out | std::ofstream::trunc);
+		std::cout << mFolderName+"/"+getFilepath(mFolderName, args...) << std::endl;
+		// throw -1;
+		str.open(mFolderName+"/"+getFilepath(mFolderName, args...), std::ofstream::out | std::ofstream::trunc);
 		if (!str.is_open()){
 			std::cout << "error opening file for write" << std::endl;
 			return false;
@@ -105,12 +108,14 @@ private:
 	std::string 		mFolderName;
 
 	template <typename... Path>
-	std::string getFilepath(std::string first, Path... pth, std::string filename){
-		return first+"/"+getFilepath(pth..., filename);
+	std::string getFilepath(std::string basefolder, std::string first, Path... pth){
+		// std::cout << "checking dir: " << basefolder +"/"+first << std::endl;
+		if (!check_directory(basefolder+"/"+first)) make_directory(basefolder+"/"+first);
+		return first+"/"+getFilepath(basefolder+"/"+first, pth...);
 	}
 
-
-	std::string getFilepath(std::string filename){
+	// base case
+	std::string getFilepath(std::string basefolder, std::string filename){
 		return filename;
 	}
 };

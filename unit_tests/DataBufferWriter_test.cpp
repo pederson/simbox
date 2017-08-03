@@ -13,7 +13,11 @@ int main(int argc, char * argv[]){
 	
 	bio.resize(100);
 	for (auto i=0; i<100; i++) bio[i] = v1[i];
-	bio.write_buffer("testfile.txt");
+	bio.write_buffer("booger", "eater", "testfile.txt");
+	for (auto i=0; i<100; i++) bio[i] = v1[i]+1;
+	bio.write_buffer("booger", "picker", "test2.txt");
+for (auto i=0; i<100; i++) bio[i] = v1[i]-1;
+	bio.write_buffer("doodee", "licker", "test3.txt");
 	// for (auto it=zit; it!=zitend; it++){
 		
 	// }
