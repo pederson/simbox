@@ -27,22 +27,61 @@
 namespace simbox{
 
 
-
 // these enums follow closely to the MSH format
 // http://www.manpagez.com/info/gmsh/gmsh-2.2.6/gmsh_63.php
-enum MeshType{REGULAR=0, UNSTRUCTURED_TRI=1, UNSTRUCTURED_QUAD=2, UNSTRUCTURED_MIXED=3, MESH_UNKNOWN};
-enum class ElementType : unsigned int {EMPTY_0=0, POINT_1, LINE_2, TRI_3, QUAD_4, TET_4, HEX_8, PRISM_6, PYRAMID_5, UNKNOWN};
+struct MeshType {};
+struct Regular : public MeshType {};
+struct UnstructuredTri : public MeshType {};
+struct UnstructuredQuad : public MeshType {};
+struct UnstructuredMixed : public MeshType {};
 
-const std::vector<std::string> elnames = {"Empty", "Point_1", "Line_2", "Tri_3", "Quad_4", "Tet_4", "Hex_8", "Prism_6", "Pyramid_5", "Unknown"};
-const std::vector<unsigned int> nvert = {0, 1, 2, 3, 4, 4, 8, 6, 5, 0};
-inline std::string get_string(ElementType et){return elnames[(int)et];};
-// inline ElementType get_element(std::string els){
-//   for (auto e=ElementType::EMPTY_0; e<ElementType::UNKNOWN; e++){
-//     if (get_string(e).compare(els)==0) return e;
-//   }
-//   return ElementType::UNKNOWN;
-// }
-inline unsigned int get_nvert(ElementType et){return nvert[(int)et];};
+
+
+struct ElementType {};
+struct EmptyElement : public ElementType{
+  static std::string name = "Empty";
+  static std::size_t numvert = 0;
+};
+struct Point1Element : public ElementType{
+  static std::string name = "Point_1";
+  static std::size_t numvert = 1;
+  static std::size_t dim = 0;
+};
+struct Line2Element : public ElementType{
+  static std::string name = "Line_2";
+  static std::size_t numvert = 2;
+  static std::size_t dim = 1;
+};
+struct Tri3Element : public ElementType{
+  static std::string name = "Tri_3";
+  static std::size_t numvert = 3;
+  static std::size_t dim = 2;
+};
+struct Quad4Element : public ElementType{
+  static std::string name = "Quad_4";
+  static std::size_t numvert = 4;
+  static std::size_t dim = 2;
+};
+struct Tet4Element : public ElementType{
+  static std::string name = "Tet_4";
+  static std::size_t numvert = 4;
+  static std::size_t dim = 3;
+};
+struct Hex8Element : public ElementType{
+  static std::string name = "Hex_8";
+  static std::size_t numvert = 8;
+  static std::size_t dim = 3;
+};
+struct Prism6Element : public ElementType{
+  static std::string name = "Prism_6";
+  static std::size_t numvert = 6;
+  static std::size_t dim = 3;
+};
+struct Pyramid5Element : public ElementType{
+  static std::string name = "Pyramid_5";
+  static std::size_t numvert = 5;
+  static std::size_t dim = 3;
+};
 
 
 
@@ -54,6 +93,7 @@ inline unsigned int get_nvert(ElementType et){return nvert[(int)et];};
  *  data on the node. 
  *
  */
+ /*
 template<std::size_t dim>
 class Node{
 public:
@@ -154,6 +194,7 @@ Node<dim> operator*(double val, const Node<dim> & p){
   for (auto i=0; i<dim; i++) out.x[i] = val*p.x[i];
   return out;
 }
+*/
 
 
 
@@ -171,6 +212,7 @@ Node<dim> operator*(double val, const Node<dim> & p){
  *  for definitions of different types
  *
  */
+ /*
 template<std::size_t dim>
 class Element{
 public:
@@ -201,262 +243,49 @@ public:
     return;
   }
 };
+*/
 
 
 
-
-
-/** @class PointQueryObject
- *  @brief an object that returns a value given a point query
- *
- *  abstract object that returns a
- *  value given a query point. Basically
- *  this can be used to wrap a geometric 
- *  object
- *
- */
-template<std::size_t dim>
-class PointQueryObject {
-public:
-  virtual double query(const Node<dim> & nd) const;
-};
 
 
 
 
 /** @class Mesh
- *  @brief a mesh in 1, 2, or 3 dimensions
+ *  @brief a mesh 
  *
  *  a bunch of points connected by edges. Or
  *  from a different perspective, a bunch of 
  *  elements (cells) with shared edges
  *
  */
-template<std::size_t dim>
-class Mesh{
+template <typename MeshT, typename ElementT, 
+          class NodePolicy,
+          class ElementPolicy,
+          class EdgePolicy,
+          class FacePolicy>
+class Mesh : public NodePolicy, 
+             public ElementPolicy, 
+             public EdgePolicy, 
+             public FacePolicy
+{
 public:
-  // constructor
-  Mesh()
-  : m_mesh_type(MESH_UNKNOWN) {};
 
-  // copy constructor
-  // Mesh(const Mesh & mesh);
-  
-  // // destructor
-  // ~Mesh();
-
-  void print_summary(std::ostream & os=std::cout) const{
-    os << "<Mesh " ;
-    os << "dim=\"" << dim << "\"" ;
-    
-    if (snodecount() == 0){
-      os << ">" << std::endl;
-      os << "</Mesh>" << std::endl;
-      return;
-    }
-
-    
-
-    os << " type=\"";
-    if (m_mesh_type==REGULAR) os << "REGULAR" ;
-    else if (m_mesh_type==UNSTRUCTURED_TRI) os << "UNSTRUCTURED_TRI" ;
-    else if (m_mesh_type==UNSTRUCTURED_QUAD) os << "UNSTRUCTURED_QUAD" ;
-    else if (m_mesh_type == UNSTRUCTURED_MIXED) os << "UNSTRUCTURED_MIXED" ;
-    else os << "MESH_UNKNOWN" ;
-    os << "\"" ;
-    os << ">" << std::endl;
-
-    os << "\t<snodecount>" << snodecount() << "</snodecount>" << std::endl;
-    // os << "\t<sedgecount>" << sedgecount() << "</sedgecount>" << std::endl;
-    os << "\t<selementcount>" << selementcount() << "</selementcount>" << std::endl;
-    os << "\t<dnodecount>" << dnodecount() << "</dnodecount>" << std::endl;
-    // os << "\t<dedgecount>" << dedgecount() << "</dedgecount>" << std::endl;
-    os << "\t<delementcount>" << delementcount() << "</delementcount>" << std::endl;
-
-    os << "\t<Extents>" << m_minpt << ", " << m_maxpt << "</Extents>" << std::endl;
-    
-    for (auto i=m_nodedata.begin(); i!=m_nodedata.end(); i++) os << "\n" << "\t<NodeData>" << i->first << "</NodeData>" << std::endl;
-    for (auto i=m_elementdata.begin(); i!=m_elementdata.end(); i++) os << "\n" << "\t<ElementData>" << i->first << "</ElementData>" << std::endl;
-
-    os << "</Mesh>" << std::endl;
-
-    return;
+  template <std::size_t dim,
+            typename KeyT>
+  const double & x(KeyT nodekey){
+    return NodePolicy::x<dim>(nodekey);
   }
 
-  // void print_detailed(std::ostream & os=std::cout) const;
-  
 
-  // metadata access
-  MeshType mesh_type() const {return m_mesh_type;};
-  unsigned int snodecount() const {return m_snodes.size();};
-  // unsigned int sedgecount() const {return m_sedges.size();};
-  unsigned int selementcount() const {return m_selements.size();};
-  unsigned int dnodecount() const {return m_dnodes.size();};
-  // unsigned int dedgecount() const {return m_dedges.size();};
-  unsigned int delementcount() const {return m_delements.size();};
-
-  virtual unsigned int nearest_node(const Node<dim> & n) const{
-    double dsq = Node<dim>::distsq(n,m_snodes[0]);
-    unsigned int minloc = 0;
-    double minval = dsq;
-    for (auto i=1; i<m_snodes.size(); i++){
-      dsq = Node<dim>::distsq(n,m_snodes[i]);
-      if (dsq < minval){
-        minloc = i;
-        minval = dsq;
-      }  
-    }
-    return minloc;
+  template <typename ElT>
+  ElT & element(KeyT elemkey){
+    return ElementPolicy::operator[](elemkey);
   }
-  // unsigned int nearest_element(const Node & n) const;
-
-  // node and element access
-  Node<dim> & snode(unsigned int i) {return m_snodes.at(i);};
-  // Edge & sedge(unsigned int i) {return m_sedge.at(i);};
-  Element<dim> & selement(unsigned int i) {return m_selements.at(i);};
-  const Node<dim> & snode(unsigned int i) const {return m_snodes.at(i);};
-  // const Edge & sedge(unsigned int i) const {return m_sedge.at(i);};
-  const Element<dim> & selement(unsigned int i) const {return m_selements.at(i);};
-
-  Node<dim> & dnode(unsigned int i) {return m_dnodes.at(i);};
-  // Edge & dedge(unsigned int i) {return m_dedge.at(i);};
-  Element<dim> & delement(unsigned int i) {return m_delements.at(i);};
-  const Node<dim> & dnode(unsigned int i) const {return m_dnodes.at(i);};
-  // const Edge & dedge(unsigned int i) const {return m_dedge.at(i);};
-  const Element<dim> & delement(unsigned int i) const {return m_delements.at(i);};
-
-  // property interaction and access
-  const std::vector<double> & nodedata(std::string fieldname) const {return m_nodedata.at(fieldname);};
-  const std::vector<double> & elementdata(std::string fieldname) const {return m_elementdata.at(fieldname);};
-
-  // void set_nodecount(unsigned int count);
-  // void set_elementcount(unsigned int count);
-
-  void add_nodedata(std::string property_name, const double * values){
-    std::vector<double> prop;
-    prop.assign(m_snodes.size(), 0.0);
-    for (unsigned int i=0; i<m_snodes.size(); i++) prop.at(i) = values[i];
-    m_nodedata[property_name] = prop;
-  }
-
-  void add_nodedata(std::string property_name, double init_val){
-    std::vector<double> prop;
-    prop.assign(m_snodes.size(), init_val);
-    m_nodedata[property_name] = prop;
-  }
-
-  // add nodedata by point query
-  void add_nodedata(std::string name, const PointQueryObject<dim> & pqo){
-    std::vector<double> prop(m_snodes.size());
-    for (auto i=0; i<m_snodes.size(); i++){
-      prop[i] = pqo.query(m_snodes[i]);
-    }
-    m_nodedata[name] = prop;
-  }
-
-  void add_elementdata(std::string property_name, const double * values){
-    std::vector<double> prop;
-    prop.assign(m_selements.size(), 0.0);
-    for (unsigned int i=0; i<m_selements.size(); i++) prop.at(i) = values[i];
-    m_elementdata[property_name] = prop;
-  }
-
-  void add_elementdata(std::string property_name, double init_val){
-    std::vector<double> prop;
-    prop.assign(m_selements.size(), init_val);
-    m_elementdata[property_name] = prop;
-  }
-
-  // add elementdata by point query at center of element
-  void add_elementdata_center(std::string name, const PointQueryObject<dim> & pqo){
-    std::vector<double> prop(m_selements.size());
-    for (auto i=0; i<m_selements.size(); i++){
-      Node<dim> center = m_selements[i].nodeinds[0];
-      for (auto j=1; j<m_selements[i].nodeinds.size(); j++) center = center + m_selements[i].nodeinds[j];
-      center = 1.0/(m_selements[i].nodeinds.size())*center;  
-      prop[i] = pqo.query(center);
-    }
-    m_elementdata[name] = prop;
-  }
-
-  // add elementdata by averaging the values at the nodes
-  void add_elementdata_avg(std::string name, const PointQueryObject<dim> & pqo){
-    std::vector<double> prop(m_selements.size());
-    for (auto i=0; i<m_selements.size(); i++){
-      double val = pqo.query(m_selements[i].nodeinds[0]);
-      for (auto j=1; j<m_selements[i].nodeinds.size(); j++) val += pqo.query(m_selements[i].nodeinds[j]);
-      val /= m_selements[i].nodeinds.size();  
-      prop[i] = val;
-    }
-    m_elementdata[name] = prop;
-  }
-
-  // // add elementdata by the mode of the values at the nodes
-  // void add_elementdata_mode(std::string name, const PointQueryObject<dim> & pqo){
-  //   std::vector<double> prop(m_selements.size());
-  //   for (auto i=0; i<m_selements.size(); i++){
-  //     double val = pqo.query(m_selements[i].nodeinds[0]);
-  //     for (auto j=1; j<m_selements[i].nodeinds.size(); j++) val += pqo.query(m_selements[i].nodeinds[j]);
-  //     val /= m_selements[i].nodeinds.size();  
-  //     prop[i] = val;
-  //   }
-  //   m_elementdata[name] = prop;
-  // }
-
-
-  void set_nodedata(std::string property_name, unsigned int i, double val){m_nodedata.at(property_name).at(i) = val;};
-
-  void set_elementdata(std::string property_name, unsigned int i, double val){m_elementdata.at(property_name).at(i) = val;};
-  
-  std::vector<std::string> get_nodedata_names() const{
-    std::vector<std::string> names;
-    for (auto p=m_nodedata.begin(); p!=m_nodedata.end(); p++){
-      names.push_back(p->first);
-    }
-    return names;
-  }
-  
-  std::vector<std::string> get_elementdata_names() const{
-    std::vector<std::string> names;
-    for (auto p=m_elementdata.begin(); p!=m_elementdata.end(); p++){
-      names.push_back(p->first);
-    }
-    return names;
-  }
-
-  void calc_extents(){
-    m_minpt = m_snodes.at(0);
-    m_maxpt = m_snodes.at(0);
-    for (unsigned int i=1; i<m_snodes.size(); i++){
-      // std::cout << "I: " << i << m_snodes.at(i) << std::endl;
-      for (auto j=0; j<dim; j++){
-        if (m_snodes.at(i).x[j] < m_minpt.x[j]) m_minpt.x[j] = m_snodes.at(i).x[j];
-        if (m_snodes.at(i).x[j] > m_maxpt.x[j]) m_maxpt.x[j] = m_snodes.at(i).x[j];
-      }
-    }
-    // std::cout << "minpt: " << m_minpt << " maxpt: " << m_maxpt << std::endl;
-    return;
-  }
-
-protected:
-  // metadata
-  MeshType                        m_mesh_type;
-  Node<dim>                       m_minpt, m_maxpt;
-
-  // nodes and elements
-  std::vector<Node<dim>>          m_snodes;     // array of STATIC nodes
-  // std::vector<Edge<dim>>          m_sedges;     // array of STATIC edges
-  std::vector<Element<dim>>       m_selements;  // array of STATIC elements
-  std::list<Node<dim>>            m_dnodes;     // array of DYNAMIC nodes
-  // std::list<Edge<dim>>            m_dedges;     // array of DYNAMIC edges
-  std::list<Element<dim>>         m_delements;  // array of DYNAMIC elements
-
-  // user-defined properties for the mesh
-  std::map<std::string, std::vector<double>>      m_nodedata;
-  std::map<std::string, std::vector<double>>      m_elementdata;
 
 };
 
 
-}
+
+} // end namespace simbox
 #endif
