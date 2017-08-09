@@ -52,8 +52,7 @@ template<> const hid_t H5DataType<long double>::value 		= H5T_NATIVE_LDOUBLE;
 // template<> const hid_t H5DataType<hbool_t>::value 			= H5T_NATIVE_HBOOL;
 
 
-// template <> struct H5DataType<double>{static const hid_t value = H5T_NATIVE_DOUBLE;};
-// template <> struct H5DataType<unsigned int>{typedef H5T_NATIVE_UINT type;};
+
 
 /** @class HDFFileSystemWriter
  *  @brief class for I/O using HDF5 file format
@@ -70,8 +69,11 @@ public:
 	{
 		// collectively open file
 		mPlistId = H5Pcreate(H5P_FILE_ACCESS);
+
 		// if MPI enabled...
 		// H5Pset_fapl_mpio(mPlistId, MPI_COMM_WORLD, MPI_INFO_NULL);
+		
+
 		mH5File = H5Fcreate(mFileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, mPlistId);
 		H5Pclose(mPlistId);
 	};
@@ -100,7 +102,6 @@ public:
 	bool read(T * target, hsize_t length, Args... args){
 		hid_t ds = makeDataspace(1, &length);
 		hid_t set = openDataset(mH5File, args...);
-		// hid_t set = makeDataset(mH5File, args..., H5DataType<T>::value, ds);
 		hid_t ms = makeDataspace(1, &length);
 
 		// get propertylist ID
@@ -119,13 +120,8 @@ public:
 private:
 	std::string 		mFileName;
 
-	hid_t 			mH5File;
-	hid_t			mPlistId;
-	hid_t			mTransientSpace;
-	hid_t			mNodefieldSpace;
-	hid_t			mElementfieldspace;
-	hid_t			mNodeMemspace;
-	hid_t			mElemMemspace;
+	hid_t 				mH5File;
+	hid_t				mPlistId;
 
 
 
