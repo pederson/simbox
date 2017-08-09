@@ -17,7 +17,8 @@ int main(int argc, char * argv[]){
 					   simbox::DataItem::Four>("field1", "5 5", Writer::referenceEntity("H5FILE")+":/here/I/am");
 	xout.writeDataItem<simbox::DataItem::HDF, 
 					   simbox::DataItem::Float, 
-					   simbox::DataItem::Eight>("test1", "1 "+Writer::referenceEntity("NUMVERTS"), Writer::referenceEntity("H5FILE")+":/here/I/am");
+					   simbox::DataItem::Eight>("test1", "1 "+Writer::referenceEntity("NUMVERTS"), 
+					   							Writer::referenceEntity("H5FILE")+":/here/I/am");
 	xout.writeDataItemReference("test1");
 
 

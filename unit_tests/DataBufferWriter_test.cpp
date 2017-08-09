@@ -9,7 +9,7 @@ int main(int argc, char * argv[]){
 	std::size_t nvals = 20;
 	std::vector<int> v1(nvals);
 	for (auto i=0; i<nvals; i++) v1[i] = i;
-	simbox::DefaultBufferWriter bio("test");
+	simbox::DefaultBufferWriter<int> bio("test");
 	bio.resize(nvals);
 	for (auto i=0; i<nvals; i++) bio[i] = v1[i];
 

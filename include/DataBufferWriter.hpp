@@ -34,6 +34,30 @@
 
 
 
+ namespace Detail{
+	// compile-time for_each on a tuple
+	template <typename TupleType, typename FunctionType>
+	void for_each(TupleType&&, FunctionType
+	            , std::integral_constant<std::size_t, std::tuple_size<typename std::remove_reference<TupleType>::type >::value>) {}
+
+	template <std::size_t I, typename TupleType, typename FunctionType
+	       , typename = typename std::enable_if<I!=std::tuple_size<typename std::remove_reference<TupleType>::type>::value>::type >
+	void for_each(TupleType&& t, FunctionType f, std::integral_constant<size_t, I>)
+	{
+	    f(std::get<I>(t));
+	    for_each(std::forward<TupleType>(t), f, std::integral_constant<size_t, I + 1>());
+	}
+
+	template <typename TupleType, typename FunctionType>
+	void for_each(TupleType&& t, FunctionType f)
+	{
+	    for_each(std::forward<TupleType>(t), f, std::integral_constant<size_t, 0>());
+	}
+}
+
+
+
+
 void make_directory(std::string path){
 	mkdir(path.c_str(), 0700);
 }
@@ -80,7 +104,13 @@ public:
 
 
 
-
+/** @class AsciiFileSystemWriter
+ *  @brief class to write txt files into a foldered system
+ *
+ *  write arguments are consecutive strings that specify 
+ * 	a folder path, ending in a filename
+ *
+ */
 class AsciiFileSystemWriter{
 public:
 	AsciiFileSystemWriter(std::string foldername)
@@ -94,7 +124,7 @@ public:
 	template <typename T, typename... Args>
 	bool write(T * data, std::size_t length, Args... args){
 		std::ofstream str;
-		// std::cout << mFolderName+"/"+getFilepath(mFolderName, args...) << std::endl;
+		std::cout << mFolderName+"/"+getFilepath(mFolderName, args...) << std::endl;
 		str.open(mFolderName+"/"+getFilepath(mFolderName, args...), std::ofstream::out | std::ofstream::trunc);
 		if (!str.is_open()){
 			std::cout << "error opening file for write" << std::endl;
@@ -104,6 +134,17 @@ public:
 		for (auto i=0; i<length; i++){
 			str << data[i] << "\n";
 		}
+		return true;
+	}
+
+
+	// append a line of data to a new or existing text file
+	template <typename... Args, typename... Path>
+	bool append_line(std::tuple<Args...> cols, Path... pth){
+		std::ofstream str;
+		str.open(mFolderName+"/"+getFilepath(mFolderName, pth...), std::ofstream::out | std::ofstream::app);
+		Detail::for_each(cols, [&str](auto & r){str << r << " " ;});
+		str << std::endl;
 		return true;
 	}
 
@@ -144,8 +185,14 @@ private:
 
 
 
+// define a default as using a std::vector and AsciiFileSystemWriter
+template <typename T>
+struct DefaultBufferWriterTypedef{
+	typedef DataBufferWriter<std::vector<T>, AsciiFileSystemWriter> type;
+};
+template <typename T>
+using DefaultBufferWriter = typename DefaultBufferWriterTypedef<T>::type;
 
-typedef DataBufferWriter<std::vector<double>, AsciiFileSystemWriter> DefaultBufferWriter; 
 
 } // end namespace simbox
 #endif
