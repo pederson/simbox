@@ -98,6 +98,44 @@ public:
 	}
 
 
+	// create a dataset without writing anything to it
+	template <typename T, typename... Path>
+	bool create(hsize_t nrows, hsize_t ncols, Path... pth){
+		hsize_t dssize[2]; dssize[0] = nrows; dssize[1] = ncols;
+		hid_t ds = makeDataspace(2, dssize);
+		hid_t set = makeDataset(mH5File, pth..., H5DataType<T>::value, ds);
+	}
+
+
+	// write a row of data to an existing dataset
+	template <typename Arg1, typename... Args, typename... Path>
+	bool write_row(std::size_t row, std::tuple<Arg1, Args...> cols, Path... pth){
+		hsize_t length = std::tuple_size<std::tuple<Arg1, Args...>>::value;
+		std::vector<Arg1> vals(length);
+		auto it = vals.begin();
+		Detail::for_each(cols, [&it](auto & r){*it = r; it++;});
+
+		
+		hid_t set = openDataset(mH5File, pth...);
+		hid_t ds = H5Dget_space(set);
+		hid_t ms = makeDataspace(1, &length);
+
+		// get propertylist ID
+		mPlistId = H5Pcreate(H5P_DATASET_XFER);
+		H5Pset_dxpl_mpio(mPlistId, H5FD_MPIO_INDEPENDENT);
+
+		// write to file
+		hsize_t offset[2], count[2], stride[2], block[2];
+		offset[0] = row; offset[1] = 0;
+		count[0] = 1; count[1] = length;
+		stride[0] = 1; stride[1] = 1;
+		block[0] = 1; block[1] = 1;
+		H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, stride, count, block);
+		H5Dwrite(set, H5DataType<Arg1>::value, ms, ds, mPlistId, &vals.front());
+		return true;
+	}
+
+
 	template <typename T, typename... Args>
 	bool read(T * target, hsize_t length, Args... args){
 		hid_t ds = makeDataspace(1, &length);

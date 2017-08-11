@@ -8,6 +8,9 @@ int main(int argc, char * argv[]){
 
 	// typedef simbox::DataBufferWriter<std::vector<int>, simbox::HDFFileSystemWriter> Writer;
 	typedef simbox::XDMFWriter Writer;
+
+	std::cout << simbox::Stringify<simbox::Attribute::Scalar>::label << std::endl;
+	// auto r = simbox::Name("brianwilson");
 	
 
 	Writer xout("test.xdmf");
@@ -22,7 +25,7 @@ int main(int argc, char * argv[]){
 	xout.writeDataItemReference("test1");
 
 
-	xout.write(Writer::dataItem<simbox::DataItem::XML, simbox::DataItem::Four>("/blah/here/me/rawr"));
+	xout.write(Writer::dataItem<simbox::DataItem::XML, simbox::DataItem::Four>("rawr","1 10", "/blah/here/me/rawr"));
 
 
 	xout.close();
