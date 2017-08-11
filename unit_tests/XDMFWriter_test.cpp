@@ -26,7 +26,7 @@ int main(int argc, char * argv[]){
 
 
 	xout.write(Writer::dataItem<simbox::DataItem::XML, simbox::DataItem::Four>("rawr","1 10", "/blah/here/me/rawr"));
-
+	xout.write(Writer::openBrackets<true, simbox::DataItem::XML>("Attribute",simbox::Name("namehere2"), simbox::Dimensions(10, 20, 30)));
 
 	xout.close();
 	return 0;

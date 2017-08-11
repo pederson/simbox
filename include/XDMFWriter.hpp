@@ -22,6 +22,25 @@ namespace simbox{
 
 
 
+
+struct Name : public std::pair<std::string, std::string>{
+	Name(std::string name)
+	: std::pair<std::string, std::string>("Name",name) {};
+};
+
+
+std::pair<std::string, std::string> Dimensions(){
+	return std::make_pair("Dimensions", "");
+}
+
+template <typename... Args>
+std::pair<std::string, std::string> Dimensions(std::size_t d, Args... args){
+	return std::make_pair("Dimensions", std::to_string(d)+" "+Dimensions(args...).second);
+}
+
+
+
+
 // class str_const {
 // // constexpr string
 // private:
@@ -557,7 +576,7 @@ public:
 	static std::string openBrackets(std::string name){
 		std::string out;
 		if (isfirst) out = "<"+name;
-		else out = name;
+		else out = "";
 
 		// add the attribute
 		out = out + " " + Stringify<Attrib1>::label + "=" + "\"" + Stringify<Attrib1>::value + "\"";
@@ -567,6 +586,7 @@ public:
 		return out;
 	};
 
+
 	// base case
 	template <bool isfirst>
 	static std::string openBrackets(std::string name){
@@ -575,6 +595,21 @@ public:
 		else out = name;
 
 		return out+">";
+	};
+
+
+	template <bool isfirst, typename... Attribs, typename... StringPair>
+	static std::string openBrackets(std::string name, std::pair<std::string, std::string> prop1, StringPair... props){
+		std::string out;
+		if (isfirst) out = "<"+name;
+		else out = "";
+
+		// add the property
+		out = out + " " + prop1.first + "=" + "\"" + prop1.second + "\"";
+
+		// add the rest of the attributes
+		out = out + openBrackets<false, Attribs...>(name, props...);
+		return out;
 	};
 
 
