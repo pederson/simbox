@@ -3,6 +3,7 @@
 
 
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <iostream>
 #include <type_traits>
@@ -14,8 +15,16 @@ namespace simbox{
 
 template <typename container_type>
 struct container_value_type{
-	typedef typename std::remove_reference<decltype(*std::declval<container_type>().begin())>::type type;
+	typedef typename std::remove_reference<decltype(std::declval<container_type>().begin().operator*())>::type type;
 };
+
+template <typename Iterator>
+struct is_pair : public std::false_type {};
+
+template <typename f, typename s>
+struct is_pair<std::pair<f,s>> : public std::true_type {};
+
+
 
 template <typename value_type>
 struct key_type{
@@ -67,8 +76,8 @@ private:
 			return *this;
 		}
 
-		pointer operator->() const {return mIt->operator*();};
-		reference operator*() const {return *mIt->operator*();};
+		pointer operator->() const {return mIt->second;};
+		reference operator*() const {return *mIt->second;};
 
 		// increment operators
 		self_type operator++(){
@@ -128,7 +137,10 @@ public:
 //*
 //***********************************************************/
 template <typename SetType, typename Derived>
-struct MultiSetContainer{
+struct MultiSetContainer : public Derived{
+public:
+	typedef typename Derived::iterator iterator;
+
 private:
 	typedef SetType													set_type;
 	typedef Derived 												container_type;
@@ -143,46 +155,67 @@ private:
 	multimap_type     				mMultiMap;
 	set_map_type 					mSetMap;
 
-	Derived & derived() {return &static_cast<Derived *>(this);};
-	const Derived & derived() const {return &static_cast<const Derived *>(this);};
+	Derived & derived() {return *static_cast<Derived *>(this);};
+	const Derived & derived() const {return *static_cast<const Derived *>(this);};
 
+	template <typename T = value_type>
+	typename std::enable_if<is_pair<T>::value, key_type>::type 
+	get_key(const iterator & it) const {return it->first;};
+
+	template <typename T = value_type>
+	typename std::enable_if<!is_pair<T>::value, key_type>::type 
+	get_key(const iterator & it) const {return it - derived().begin();};
 public:
-	using iterator = typename Derived::iterator;
 
 	set_container_type & set(set_type s){return mSetMap[s];};
 
 	// add an existing element to a set "s"
-	void add_to_set(iterator & it, set_type s){
-		mMultiMap.emplace(it->first, s);		// create entry in the multimap
-		mSetMap[s].insert(std::make_pair(it->first, &(*it)));	// create entry in the set container
+	void  add_to_set(const iterator & it, set_type s){
+		// std::cout << "adding key: " << get_key(it) << " to set " << s << std::endl;
+		mMultiMap.emplace(get_key(it), s);		// create entry in the multimap
+		mSetMap[s].insert(std::make_pair(get_key(it), &(*it)));	// create entry in the set container
 	}
 
-	// // remove an existing element from set "s"
-	// void remove_from_set(iterator & it, SetT s){
-	// 	// erase from the multimap
-	// 	auto mit = mMultiMap.find(it->first);
-	// 	while (mit->second != s && mit->first == it->first){
-	// 		mit++;
-	// 	}
-	// 	if (mit->second == s && mit->first == it->first){
-	// 		mMultiMap.erase(mit);
-	// 		// erase from set container
-	// 		auto sit = mSetMap[s].find(it->first);
-	// 		mSetMap[s].erase(sit);
-	// 		// remove the set if it is now empty
-	// 		if (mSetMap[s].empty()){
-	// 			auto rit = mSetMap.find(s);
-	// 			mSetMap.erase(rit);
-	// 		}
-	// 	}
-	// }
+	// remove an existing element from set "s"
+	void remove_from_set(const iterator & it, set_type s){
+		// erase from the multimap
+		key_type my_key = get_key(it);
+		auto mit = mMultiMap.find(my_key);
+		while (mit->second != s && mit->first == my_key){
+			mit++;
+		}
+		if (mit->second == s && mit->first == my_key){
+			mMultiMap.erase(mit);
+			// erase from set container
+			auto sit = mSetMap[s].find(my_key);
+			mSetMap[s].erase(sit);
+			// remove the set if it is now empty
+			if (mSetMap[s].empty()){
+				auto rit = mSetMap.find(s);
+				mSetMap.erase(rit);
+			}
+		}
+	}
 
+	// set enumerator
 
 	// set intersection
 	// set difference
 	// set union
 
 };
+
+
+
+
+template <typename key, typename value, typename set>
+using set_map = MultiSetContainer<set, std::map<key, value>>;
+
+template <typename key, typename value, typename set>
+using set_unordered_map = MultiSetContainer<set, std::unordered_map<key, value>>;
+
+template <typename value, typename set>
+using set_vector = MultiSetContainer<set, std::vector<value>>;
 
 
 
