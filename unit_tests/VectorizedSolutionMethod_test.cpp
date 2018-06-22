@@ -2,19 +2,20 @@
 
 #include <iostream>
 #include <vector>
+#include <functional>
 
 
 /////// The following is the object that will be held in the container
 struct ContainedObject{
 private:
-	int mA;
+	double mA;
 	double mB;
 
 public:
 	ContainedObject() : mA(0), mB(0.0) {};
 
-	int & a() {return mA;};
-	const int & a() const {return mA;};
+	double & a() {return mA;};
+	const double & a() const {return mA;};
 
 	double & b() {return mB;};
 	const double & b() const {return mB;};
@@ -22,16 +23,6 @@ public:
 ////////////////////////////////////////
 
 
-
-// // some preprocessor magic to get the names of the functors automatically
-// #define FunctorFor(FunctionName) FunctorFor##FunctionName
-// #define DefineFunctorFor(FunctionName) \
-// 	struct FunctorFor##FunctionName { \
-// 		template <typename Iterator> \
-// 		static decltype(auto) get(Iterator & it){return it->FunctionName();}; \
-// 	};
-
-// DefineFunctorFor(a);
 
 /////// The following are functors used to access each containedobject member
 /////// from an iterator
@@ -51,13 +42,27 @@ struct FunctorForB{
 };
 ///////////////////////////////////////////
 
+typedef std::vector<ContainedObject> container_type;
 
 template <typename ContainerT, typename Functor>
 using VSM = simbox::VectorizedSolutionMethod<ContainerT, Functor>;
 
 
-// template <typename ContainerT, typename Functor>
-// using VCM = simbox::VectorizeContainerMethod<ContainerT, Functor>;
+typedef std::function<double&(const typename container_type::iterator &)>	functor_type;
+std::vector<functor_type> functs = {FunctorForA(),
+									FunctorForB()};
+
+
+template <typename Derived>
+struct ContainedObjectVectorizer{
+private:
+	Derived & derived() {return *static_cast<Derived *>(this);};
+	const Derived & derived() const {return *static_cast<const Derived *>(this);};
+public:
+	VSM<Derived, functor_type> vectorize() {return VSM<Derived, functor_type>(derived(), functs);};
+}; 
+
+
 
 
 // #define DefineVectorizedFunctor(FunctionName) \
@@ -75,21 +80,11 @@ using VSM = simbox::VectorizedSolutionMethod<ContainerT, Functor>;
 // DefineVectorizedFunctor(a);
 
 
-// // use CRTP to extend functionality to use VectorizedContainerMethods
-// // on classes that implement ContainedObjectFunctors
-// template <typename Derived>
-// struct ContainedObjectFunctors{
-// private:
-// 	Derived & derived() {return *static_cast<Derived *>(this);};
-// 	const Derived & derived() const {return *static_cast<const Derived *>(this);};
-// public:
-// 	VCM<Derived, FunctorFor(a)> a() {return VCM<Derived, FunctorFor(a)>(derived());};
-// 	VCM<Derived, FunctorForB> b() {return VCM<Derived, FunctorForB>(derived());};
-// };
 
 
 
-struct ExtendedVector : public std::vector<ContainedObject>
+struct ExtendedVector : public std::vector<ContainedObject>, 
+						public ContainedObjectVectorizer<ExtendedVector>
 {
 
 	typedef std::vector<ContainedObject> base_type;
@@ -109,8 +104,7 @@ struct ExtendedVector : public std::vector<ContainedObject>
 int main(int argc, char * argv[]){
 	ExtendedVector myvec(5);
 
-	// std::cout << "a size: " << myvec.a().size() << std::endl;
-	// std::cout << "b size: " << myvec.b().size() << std::endl;
+	std::cout << "vectorized size: " << myvec.vectorize().size() << std::endl;
 	std::cout << "container size: " << myvec.size() << std::endl;
 
 	int ct = 0;
@@ -120,29 +114,19 @@ int main(int argc, char * argv[]){
 		ct++;
 	}
 
-	// // access a() through the vectorized function object
-	// std::cout << "a: " << std::endl;
-	// for (auto it=myvec.a().begin(); it!=myvec.a().end(); it++){
-	// 	std::cout << *it << std::endl;
-	// }
+	ct=0;
+	// access vectorize() through the normal container iteration
+	for (auto it=myvec.vectorize().begin(); it!=myvec.vectorize().end(); it++){
+		std::cout << *it << std::endl;
+		(*it) = ct;
+		ct++;
+	}
 
-	// for (auto it=myvec.a().begin(); it!=myvec.a().end(); it++){
-	// 	(*it) = 10;//std::cout << *it << std::endl;
-	// }
+	std::cout << "finished iterating" << std::endl;
 
-	// std::cout << "a: " << std::endl;
-	// for (auto it=myvec.a().begin(); it!=myvec.a().end(); it++){
-	// 	std::cout << *it << std::endl;
-	// }
-
-	// for (auto it=myvec.b().begin(); it!=myvec.b().end(); it++){
-	// 	(*it) = -1.0;//std::cout << *it << std::endl;
-	// }
-
-	// std::cout << "b: " << std::endl;
-	// for (auto it=myvec.b().begin(); it!=myvec.b().end(); it++){
-	// 	std::cout << *it << std::endl;
-	// }
+	for (auto it=myvec.vectorize().begin(); it!=myvec.vectorize().end(); it++){
+		std::cout << *it << std::endl;
+	}
 
 	return 0;
 }
