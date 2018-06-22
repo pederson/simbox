@@ -67,29 +67,19 @@ private:
 		reference operator*() const {return mVSM->mFuncts[mCtr_functs](mIt);};
 
 		self_type operator++(){
-			std::cout << "before ++" << std::endl;
 			mCtr_functs++;
-			std::cout << "++" << std::endl;
-			unsigned int mod = mCtr_functs%mVSM->mFuncts.size();
+			unsigned int mod = mCtr_functs/mVSM->mFuncts.size();
 			mCtr_objs += mod;
 			mCtr_functs -= mod*mVSM->mFuncts.size();
 			mIt += mod;
-			std::cout << "am here" << std::endl;
 			return *this;
 		};
 		self_type operator++(int blah) {
-			// std::cout << "before ++" << std::endl;
 			mCtr_functs++;
-			// std::cout << "++" << std::endl;
 			unsigned int mod = mCtr_functs/mVSM->mFuncts.size();
-			// std::cout << "mod: " << mod << std::endl;
 			mCtr_objs += mod;
-			// std::cout << "functs size: " << mVSM->mFuncts.size();
-			// std::cout << "ctr_objs += mod" << std::endl;
 			mCtr_functs -= mod*mVSM->mFuncts.size();
-			// std::cout << "ctr_functs -= mod*n" << std::endl;
 			mIt += mod;
-			// std::cout << "mit += mod" << std::endl;
 			return *this;
 		};
 
