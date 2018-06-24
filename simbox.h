@@ -1,13 +1,16 @@
 #ifndef _SIMBOX_H
 #define _SIMBOX_H
 
+	#include "include/Macros.hpp"
+
 	#include "include/SignalGenerator.hpp"
 	#include "include/SignalProcessing.hpp"
 	#include "include/Timer.hpp"
 
 	#include "include/DataBufferWriter.hpp"
 	#include "include/GenericMesh.hpp"
-	#include "include/VectorizeContainerMethod.hpp"
+	#include "include/VectorizeContainerFunctor.hpp"
+	#include "include/VectorizeContainerMultifunctor.hpp"
 	#include "include/ZipIterator.hpp"
 	#include "include/XDMFWriter.hpp"
 	#include "include/LookupTable.hpp"

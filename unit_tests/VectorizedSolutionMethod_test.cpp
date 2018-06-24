@@ -1,4 +1,5 @@
-#include "../include/VectorizedSolutionMethod.hpp"
+#include "../include/VectorizeContainerMultifunctor.hpp"
+#include "../include/VectorizeContainerFunctor.hpp"
 
 #include <iostream>
 #include <vector>
@@ -10,81 +11,42 @@ struct ContainedObject{
 private:
 	double mA;
 	double mB;
+	double mC;
 
 public:
-	ContainedObject() : mA(0), mB(0.0) {};
+	ContainedObject() : mA(0), mB(0.0), mC(-1.0) {};
 
 	double & a() {return mA;};
 	const double & a() const {return mA;};
 
 	double & b() {return mB;};
 	const double & b() const {return mB;};
+
+	double & c() {return mC;};
+	const double & c() const {return mC;};
 };
 ////////////////////////////////////////
 
 
-
-/////// The following are functors used to access each containedobject member
-/////// from an iterator
-struct FunctorForA{
-	template <typename Iterator>
-	static decltype(auto) get(Iterator & it){return it->a();};
-
-	template <typename Iterator>
-	decltype(auto) operator()(Iterator & it){return get(it);};
-};
-struct FunctorForB{
-	template <typename Iterator>
-	static decltype(auto) get(Iterator & it){return it->b();};
-
-	template <typename Iterator>
-	decltype(auto) operator()(Iterator & it){return get(it);};
-};
-///////////////////////////////////////////
-
 typedef std::vector<ContainedObject> container_type;
-
-template <typename ContainerT, typename Functor>
-using VSM = simbox::VectorizedSolutionMethod<ContainerT, Functor>;
-
-
 typedef std::function<double&(const typename container_type::iterator &)>	functor_type;
-std::vector<functor_type> functs = {FunctorForA(),
-									FunctorForB()};
 
 
-template <typename Derived>
-struct ContainedObjectVectorizer{
-private:
-	Derived & derived() {return *static_cast<Derived *>(this);};
-	const Derived & derived() const {return *static_cast<const Derived *>(this);};
-public:
-	VSM<Derived, functor_type> vectorize() {return VSM<Derived, functor_type>(derived(), functs);};
-}; 
+// instantiate a vectorization of function a()
+// SIMBOX_FOR_EACH_SEP(SIMBOX_VECTORIZE_FUNCTOR_DEF, a, b, c);
+SIMBOX_VECTORIZE_FUNCTOR_DEF(a);
+SIMBOX_VECTORIZE_FUNCTOR_DEF(b);
+SIMBOX_VECTORIZE_FUNCTOR_DEF(c);
+SIMBOX_VECTORIZE_MULTIFUNCTOR_DEF(vectorize, functor_type, a, b, c);
+SIMBOX_VECTORIZE_MULTIFUNCTOR_DEF(vectorize2, functor_type, b, c);
 
 
 
-
-// #define DefineVectorizedFunctor(FunctionName) \
-// 	DefineFunctorFor(FunctionName); \
-// 	template <typename Derived> \
-// 	struct ContainedObjectFunctors{ \
-// 	private: \
-// 		Derived & derived() {return *static_cast<Derived *>(this);}; \
-// 		const Derived & derived() const {return *static_cast<const Derived *>(this);}; \
-// 	public: \
-// 		VCM<Derived, FunctorFor(FunctionName)> FunctionName() {return VCM<Derived, FunctorFor(FunctionName)>(derived());}; \
-// 		VCM<Derived, FunctorForB> b() {return VCM<Derived, FunctorForB>(derived());}; \
-// 	}; 
-
-// DefineVectorizedFunctor(a);
-
-
-
-
-
-struct ExtendedVector : public std::vector<ContainedObject>, 
-						public ContainedObjectVectorizer<ExtendedVector>
+struct ExtendedVector : public container_type,
+						public SIMBOX_VECTORIZE_FUNCTOR(a)<ExtendedVector>,
+						public SIMBOX_VECTORIZE_FUNCTOR(c)<ExtendedVector>,
+						public SIMBOX_VECTORIZE_MULTIFUNCTOR(vectorize2)<ExtendedVector>,
+						public SIMBOX_VECTORIZE_MULTIFUNCTOR(vectorize)<ExtendedVector>
 {
 
 	typedef std::vector<ContainedObject> base_type;
@@ -102,8 +64,8 @@ struct ExtendedVector : public std::vector<ContainedObject>,
 
 
 int main(int argc, char * argv[]){
-	ExtendedVector myvec(5);
 
+	ExtendedVector myvec(5);
 	std::cout << "vectorized size: " << myvec.vectorize().size() << std::endl;
 	std::cout << "container size: " << myvec.size() << std::endl;
 
@@ -127,6 +89,24 @@ int main(int argc, char * argv[]){
 	for (auto it=myvec.vectorize().begin(); it!=myvec.vectorize().end(); it++){
 		std::cout << *it << std::endl;
 	}
+
+
+	std::cout << "\n\na: " << std::endl;
+	for (auto it=myvec.a().begin(); it!=myvec.a().end(); it++){
+		std::cout << *it << std::endl;
+	}
+
+	std::cout << "\n\nc: " << std::endl;
+	for (auto it=myvec.c().begin(); it!=myvec.c().end(); it++){
+		std::cout << *it << std::endl;
+	}
+
+
+	std::cout << "vectorize2" << std::endl;
+	for (auto it=myvec.vectorize2().begin(); it!=myvec.vectorize2().end(); it++){
+		std::cout << *it << std::endl;
+	}
+
 
 	return 0;
 }

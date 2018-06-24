@@ -1,23 +1,24 @@
-/** @file VectorizeContainerMethod.hpp
- *  @brief File with VectorizeContainerMethod class
+/** @file VectorizeContainerFunctor.hpp
+ *  @brief File with VectorizeContainerFunctor class
  *
- *  This contains the VectorizeContainerMethod class descriptor
+ *  This contains the VectorizeContainerFunctor class descriptor
  *
  *  @author D. Pederson
  *  @bug No known bugs. 
  */
  
-#ifndef _VECTORIZECONTAINERMETHOD_H
-#define _VECTORIZECONTAINERMETHOD_H
+#ifndef _VECTORIZECONTAINERFUNCTOR_H
+#define _VECTORIZECONTAINERFUNCTOR_H
 
 #include <type_traits>
 #include <algorithm>
- // #include "mpitools.hpp"
+
+#include "Macros.hpp"
 
  namespace simbox{
 
-/** @class VectorizeContainerMethod
- *  @brief VectorizeContainerMethod class to extend vector-type iteration
+/** @class VectorizeContainerFunctor
+ *  @brief VectorizeContainerFunctor class to extend vector-type iteration
  *		   to a functor of the contained object iterator
  *
  *  
@@ -25,7 +26,7 @@
  */
 template <typename ContainerType,
 		  typename StaticMethodFunctor>
-class VectorizeContainerMethod{
+class VectorizeContainerFunctor{
 private:
 	ContainerType * mCont;
 
@@ -33,8 +34,8 @@ private:
 	class vcm_iterator{
 	private:
 		typedef typename std::conditional<is_const, 
-						const VectorizeContainerMethod, 
-						VectorizeContainerMethod>::type 	container_type;
+						const VectorizeContainerFunctor, 
+						VectorizeContainerFunctor>::type 	container_type;
 		typedef typename std::conditional<is_const, 
 				typename ContainerType::const_iterator, 
 				typename ContainerType::iterator>::type 	iterator_type;
@@ -73,7 +74,7 @@ public:
 	typedef vcm_iterator<true> 		const_iterator;
 	typedef vcm_iterator<false> 	iterator;
 
-	VectorizeContainerMethod(ContainerType & c) : mCont(&c) {};
+	VectorizeContainerFunctor(ContainerType & c) : mCont(&c) {};
 
 	decltype(mCont->size()) size() const {return mCont->size();};
 
@@ -85,6 +86,42 @@ public:
 
 
 };
+
+
+
+
+
+
+#define SIMBOX_VECTORIZE_FUNCTOR(FunctionName) CRTP_Vectorize_Functor_##FunctionName
+#define SIMBOX_VECTORIZE_FUNCTOR_DEF(FunctionName)		\
+	template <typename ContainerT, typename Functor>	\
+	using VCM = simbox::VectorizeContainerFunctor<ContainerT, Functor>;	\
+														\
+	namespace detail{									\
+		namespace vectorize_functor{					\
+			namespace FunctionName {					\
+				SIMBOX_FUNCTOR_PREPARE(FunctionName);	\
+			}											\
+		} 												\
+	}													\
+														\
+	template <typename Derived> 						\
+	struct SIMBOX_VECTORIZE_FUNCTOR(FunctionName){ 				\
+	private: 											\
+		Derived & derived() {return *static_cast<Derived *>(this);};	\
+		const Derived & derived() const {return *static_cast<const Derived *>(this);};	\
+	public: 																			\
+		VCM<Derived, detail::vectorize_functor::FunctionName::SIMBOX_FUNCTOR_FOR(FunctionName)> 	\
+		FunctionName() 																	\
+		{return VCM<Derived, detail::vectorize_functor::FunctionName::SIMBOX_FUNCTOR_FOR(FunctionName)>(derived());};	\
+	};
+
+
+
+
+
+
+
 
 } // end namespace simbox
 #endif

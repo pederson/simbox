@@ -1,23 +1,25 @@
-/** @file VectorizedSolutionMethod.hpp
- *  @brief File with VectorizedSolutionMethod class
+/** @file VectorizeContainerMultifunctor.hpp
+ *  @brief File with VectorizeContainerMultifunctor class
  *
- *  This contains the VectorizedSolutionMethod class descriptor
+ *  This contains the VectorizeContainerMultifunctor class descriptor
  *
  *  @author D. Pederson
  *  @bug No known bugs. 
  */
  
-#ifndef _VectorizedSolutionMethod_H
-#define _VectorizedSolutionMethod_H
+#ifndef _VECTORIZECONTAINERMULTIFUNCTOR_H
+#define _VECTORIZECONTAINERMULTIFUNCTOR_H
 
 #include <type_traits>
 #include <algorithm>
 #include <iostream>
 
+#include "Macros.hpp"
+
  namespace simbox{
 
-/** @class VectorizedSolutionMethod
- *  @brief VectorizedSolutionMethod class to extend vector-type iteration
+/** @class VectorizeContainerMultifunctor
+ *  @brief VectorizeContainerMultifunctor class to extend vector-type iteration
  *		   to a functor of the contained object iterator
  *
  *  
@@ -25,7 +27,7 @@
  */
 template <typename ContainerType,
 		  typename StaticMethodFunctor>
-class VectorizedSolutionMethod{
+class VectorizeContainerMultifunctor{
 private:
 	friend class vector_solution_iterator;
 	ContainerType * 					mCont;
@@ -35,8 +37,8 @@ private:
 	class vector_solution_iterator{
 	private:
 		typedef typename std::conditional<is_const, 
-						const VectorizedSolutionMethod, 
-						VectorizedSolutionMethod>::type 	container_type;
+						const VectorizeContainerMultifunctor, 
+						VectorizeContainerMultifunctor>::type 	container_type;
 		typedef typename std::conditional<is_const, 
 				typename ContainerType::const_iterator, 
 				typename ContainerType::iterator>::type 	iterator_type;
@@ -90,7 +92,7 @@ public:
 	typedef vector_solution_iterator<true> 		const_iterator;
 	typedef vector_solution_iterator<false> 	iterator;
 
-	VectorizedSolutionMethod(ContainerType & c, std::vector<StaticMethodFunctor> v) : mCont(&c), mFuncts(v){};
+	VectorizeContainerMultifunctor(ContainerType & c, std::vector<StaticMethodFunctor> v) : mCont(&c), mFuncts(v){};
 
 	decltype(mCont->size()) size() const {return mFuncts.size()*mCont->size();};
 
@@ -99,9 +101,46 @@ public:
 
 	const_iterator cbegin() const {return const_iterator(this, mCont->cbegin(), 0);};
 	const_iterator cend() const	 {return const_iterator(this, mCont->cend(), mFuncts.size());};
-
-	// VectorizedSolution & vectorize() {return *this;};
 };
+
+
+
+
+
+
+
+
+#define SIMBOX_VECTORIZE_MULTIFUNCTOR(ResultName) CRTP_Vectorize_Multifunctor_##ResultName
+#define SIMBOX_VECTORIZE_MULTIFUNCTOR_DEF(ResultName, FunctorType, ...)					\
+	template <typename ContainerT, typename Functor>									\
+	using VSM = simbox::VectorizeContainerMultifunctor<ContainerT, Functor>;					\
+																						\
+	namespace detail{																	\
+		namespace vectorize_multifunctor{												\
+			namespace ResultName {														\
+				SIMBOX_FOR_EACH_SEP(SIMBOX_FUNCTOR_PREPARE, __VA_ARGS__);				\
+				std::vector<functor_type> functs = 										\
+				{SIMBOX_FOR_EACH_SEQ(SIMBOX_INSTANTIATE_FUNCTOR_FOR, __VA_ARGS__)};		\
+			}																			\
+		} 																				\
+	}																					\
+																						\
+	template <typename Derived> 														\
+	struct SIMBOX_VECTORIZE_MULTIFUNCTOR(ResultName){ 									\
+	private: 																			\
+		Derived & derived() {return *static_cast<Derived *>(this);};					\
+		const Derived & derived() const {return *static_cast<const Derived *>(this);};	\
+	public: 																			\
+		VSM<Derived, FunctorType> 														\
+		ResultName() 																	\
+		{return VSM<Derived, FunctorType>(derived(), 									\
+					detail::vectorize_multifunctor::ResultName::functs);};				\
+	};
+
+
+
+
+
 
 } // end namespace simbox
 #endif
