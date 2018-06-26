@@ -103,7 +103,8 @@ int main(int argc, char * argv[]){
 
 
 	std::cout << "vectorize2" << std::endl;
-	for (auto it=myvec.vectorize2().begin(); it!=myvec.vectorize2().end(); it++){
+	for (auto it=myvec.vectorize2().cbegin(); it!=myvec.vectorize2().cend(); it++){
+		*it = 1;
 		std::cout << *it << std::endl;
 	}
 
