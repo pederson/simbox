@@ -147,7 +147,7 @@ public:
 	double value(double t) const {
 		if (t>m_toff) return 0.0;
 		double sigma_t = 1.0/(2*SIGNALGENERATOR_PI*m_sigma_f);
-		return m_magnitude*sin(2*SIGNALGENERATOR_PI*m_f0*(t-m_t0))*exp(-0.5*4*SIGNALGENERATOR_PI*SIGNALGENERATOR_PI*m_sigma_f*m_sigma_f*(t-3*sigma_t-m_t0)*(t-3*sigma_t-m_t0));
+		return m_magnitude*sin(2*SIGNALGENERATOR_PI*m_f0*(t-m_t0))*exp(-0.5*4*SIGNALGENERATOR_PI*SIGNALGENERATOR_PI*m_sigma_f*m_sigma_f*(t-5*sigma_t-m_t0)*(t-5*sigma_t-m_t0));
 	}
 	void print_summary(std::ostream & os = std::cout) const{
 		os << "GaussianBurst: Mag=" << m_magnitude << " Toff=" << m_toff ;
