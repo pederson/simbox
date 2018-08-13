@@ -19,6 +19,27 @@
  namespace simbox{
 
 
+
+
+
+ 	template <class IteratorType, 
+			  class UnaryFunction,
+			  class InterfaceFunctor>
+	void for_each_interface(IteratorType beg, IteratorType end, UnaryFunction u, InterfaceFunctor interf){
+		std::for_each(beg, end, [&u, &interf](typename IteratorType::reference itr){return u(interf(itr));});
+	}
+
+
+	// here the InterfacePolicy is explicitly provided as a template argument
+	// e.g.:     for_each<MyPolicy>(a.begin(), a.end(), Functor())
+	template <class InterfacePolicy,
+			  class IteratorType, 
+			  class UnaryFunction>
+	void for_each(IteratorType beg, IteratorType end, UnaryFunction u){
+		std::for_each(beg, end, [&u](typename IteratorType::reference itr){return u(InterfacePolicy::get(itr));});
+	}
+
+
  namespace Detail{
 	// compile-time for_each on a tuple
 	template <typename TupleType, typename FunctionType>
