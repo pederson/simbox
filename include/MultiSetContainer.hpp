@@ -139,6 +139,7 @@ public:
 template <typename SetType, typename Derived>
 struct MultiSetContainer : public Derived{
 public:
+
 	typedef typename Derived::iterator iterator;
 
 private:

@@ -36,7 +36,7 @@
 			  class IteratorType, 
 			  class UnaryFunction>
 	void for_each(IteratorType beg, IteratorType end, UnaryFunction u){
-		std::for_each(beg, end, [&u](typename IteratorType::reference itr){return u(InterfacePolicy::get(itr));});
+		std::for_each(beg, end, [&u](auto & itr){return u.operator()(InterfacePolicy::get(itr));});
 	}
 
 
