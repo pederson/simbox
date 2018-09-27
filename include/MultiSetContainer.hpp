@@ -170,6 +170,14 @@ public:
 
 	set_container_type & set(set_type s){return mSetMap[s];};
 
+	std::vector<set_type> enumerate_sets() const {
+		std::vector<set_type> out;
+		for (auto it = mSetMap.begin(); it != mSetMap.end(); it++){
+			out.push_back(it->first);
+		}
+		return out;
+	}
+
 	// add an existing element to a set "s"
 	void  add_to_set(const iterator & it, set_type s){
 		// std::cout << "adding key: " << get_key(it) << " to set " << s << std::endl;
