@@ -11,52 +11,6 @@ namespace simbox{
 
 
 
-// namespace Detail{
-// 	// compile-time for_each on a tuple
-// 	template <typename TupleType, typename FunctionType>
-// 	void for_each(TupleType&&, FunctionType
-// 	            , std::integral_constant<std::size_t, std::tuple_size<typename std::remove_reference<TupleType>::type >::value>) {}
-
-// 	template <std::size_t I, typename TupleType, typename FunctionType
-// 	       , typename = typename std::enable_if<I!=std::tuple_size<typename std::remove_reference<TupleType>::type>::value>::type >
-// 	void for_each(TupleType&& t, FunctionType f, std::integral_constant<size_t, I>)
-// 	{
-// 	    f(std::get<I>(t));
-// 	    for_each(std::forward<TupleType>(t), f, std::integral_constant<size_t, I + 1>());
-// 	}
-
-// 	template <typename TupleType, typename FunctionType>
-// 	void for_each(TupleType&& t, FunctionType f)
-// 	{
-// 	    for_each(std::forward<TupleType>(t), f, std::integral_constant<size_t, 0>());
-// 	}
-
-
-
-
-
-// 	// compile-time for_each on two tuples... used for comparisons
-// 	template <typename TupleType1, typename TupleType2, typename FunctionType>
-// 	void for_each(TupleType1&&, TupleType2&&, FunctionType
-// 	            , std::integral_constant<std::size_t, std::tuple_size<typename std::remove_reference<TupleType1>::type >::value>) {}
-
-// 	template <std::size_t I, typename TupleType1, typename TupleType2, typename FunctionType
-// 	       , typename = typename std::enable_if<I!=std::tuple_size<typename std::remove_reference<TupleType1>::type>::value>::type >
-// 	void for_each(TupleType1&& t1, TupleType2&& t2, FunctionType f, std::integral_constant<size_t, I>)
-// 	{
-// 	    f(std::get<I>(t1), std::get<I>(t2));
-// 	    for_each(std::forward<TupleType1>(t1), std::forward<TupleType2>(t2), f, std::integral_constant<size_t, I + 1>());
-// 	}
-
-// 	template <typename TupleType1, typename TupleType2, typename FunctionType>
-// 	void for_each(TupleType1&& t1, TupleType2&& t2, FunctionType f)
-// 	{
-// 	    for_each(std::forward<TupleType1>(t1), std::forward<TupleType2>(t2), f, std::integral_constant<size_t, 0>());
-// 	}
-
-
-
-
 
 // 	template <std::size_t... Ns >
 // 	struct indices
@@ -142,11 +96,16 @@ public:
 		return Detail::make_tuple_ref(mtup);
 	};
 
-	// accessing a given iterator in the zipped container
-	template <std::size_t i>
-	constexpr typename std::tuple_element<i, IteratorTuple>::type::reference 
-	get(){return *std::get<i>(mtup);};
 
+	// accessing a given iterator in the zipped container
+	template <std::size_t I>
+	typename std::tuple_element<I, IteratorTuple>::type & 
+	get() {return *std::get<I>(mtup);};
+
+	// accessing a given iterator in the zipped container
+	template <std::size_t I>
+	const typename std::tuple_element<I, IteratorTuple>::type & 
+	get() const {return *std::get<I>(mtup);};
 
 	// preincrement 
 	self_type operator++(){
@@ -187,6 +146,12 @@ private:
 template <typename IteratorTuple>
 ZipIterator<IteratorTuple> make_zip_iterator(IteratorTuple t){
 	return ZipIterator<IteratorTuple>(t);
+}
+
+// convenience function to create a zipped iterator
+template <typename... Iterator>
+ZipIterator<std::tuple<Iterator...>> make_zip_iterator(Iterator... it){
+	return ZipIterator<std::tuple<Iterator...>>(std::make_tuple(it...));
 }
 
 

@@ -40,6 +40,7 @@
 	}
 
 
+
  namespace Detail{
 	// compile-time for_each on a tuple
 	template <typename TupleType, typename FunctionType>
