@@ -116,6 +116,9 @@ public:
 	const_iterator cbegin() const {return const_iterator(this, base_type::cbegin());};
 	const_iterator cend() const	 {return const_iterator(this, base_type::cend());};
 
+
+	iterator find(KeyT k) {return iterator(this, base_type::find(k));};
+
 };
 
 
