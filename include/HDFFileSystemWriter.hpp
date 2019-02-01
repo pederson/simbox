@@ -94,6 +94,11 @@ public:
 		hsize_t offset = 0, count = length, stride = 1, block = 1;
 		H5Sselect_hyperslab(ds, H5S_SELECT_SET, &offset, &stride, &count, &block);
 		H5Dwrite(set, H5DataType<T>::value, ms, ds, mPlistId, data);
+		
+		H5Pclose(mPlistId);
+		H5Sclose(ms);
+		H5Dclose(set);
+		H5Sclose(ds);
 		return true;
 	}
 
@@ -104,6 +109,10 @@ public:
 		hsize_t dssize[2]; dssize[0] = nrows; dssize[1] = ncols;
 		hid_t ds = makeDataspace(2, dssize);
 		hid_t set = makeDataset(mH5File, pth..., H5DataType<T>::value, ds);
+
+		H5Dclose(set);
+		H5Sclose(ds);
+		return true;
 	}
 
 
@@ -117,7 +126,7 @@ public:
 
 		
 		hid_t set = openDataset(mH5File, pth...);
-		hid_t ds = H5Dget_space(set);
+		hid_t ds = H5Dget_space(set); 	// this makes a copy
 		hid_t ms = makeDataspace(1, &length);
 
 		// get propertylist ID
@@ -132,6 +141,11 @@ public:
 		block[0] = 1; block[1] = 1;
 		H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, stride, count, block);
 		H5Dwrite(set, H5DataType<Arg1>::value, ms, ds, mPlistId, &vals.front());
+		
+		H5Pclose(mPlistId);
+		H5Sclose(ms);
+		H5Sclose(ds);
+		H5Dclose(set);
 		return true;
 	}
 
@@ -147,6 +161,11 @@ public:
 		H5Pset_dxpl_mpio(mPlistId, H5FD_MPIO_INDEPENDENT);
 
 		H5Dread(set, H5DataType<T>::value, ms, ds, mPlistId, target);
+		
+		H5Pclose(mPlistId);
+		H5Sclose(ms);
+		H5Dclose(set);
+		H5Sclose(ds);
 		return true;
 	}
 
@@ -172,7 +191,9 @@ private:
 		hid_t newfolder;
 		if (checkExists(folder, first) > 0) newfolder = H5Gopen(folder, first.c_str(), H5P_DEFAULT);
 		else newfolder = makeFolder(folder, first);
-		return makeDataset(newfolder, pth...);
+		hid_t ds = makeDataset(newfolder, pth...);
+		H5Gclose(newfolder);
+		return ds;
 	}
 
 	// make a new folder at a given location and return an indentifier to the folder
@@ -181,11 +202,14 @@ private:
 		hid_t newbase;
 		if (checkExists(basefolder, first) > 0) newbase = H5Gopen(basefolder, first.c_str(), H5P_DEFAULT);
 		else newbase = makeFolder(basefolder, first);
-		return makeFolder(newbase, pth...);
+		hid_t fid = makeFolder(newbase, pth...);
+		H5Gclose(newbase);
+		return fid;
 	}
 
 
 	// open an existing dataset
+	// be sure to close it when done!!!
 	template <typename... Path>
 	hid_t openDataset(hid_t folder, std::string first, Path... pth){
 		hid_t newfolder;
@@ -194,7 +218,10 @@ private:
 			std::cout << "HDFFileSystemWriter::ERROR folder does not exist in HDF file" << std::endl;
 			throw -1;
 		}
-		return openDataset(newfolder, pth...);
+
+		hid_t ds = openDataset(newfolder, pth...);
+		H5Gclose(newfolder);
+		return ds;
 	}
 
 	
