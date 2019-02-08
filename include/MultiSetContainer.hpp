@@ -38,6 +38,7 @@ struct key_type<std::pair<const key, value>>{
 
 
 
+/*
 // container that contains the sets with key-reference pairs
 // the iterator for this should be dereferenced as the same type
 // of iterator according to the key type
@@ -120,6 +121,270 @@ public:
 	iterator find(KeyT k) {return iterator(this, base_type::find(k));};
 
 };
+// */
+
+
+
+
+// container that contains the sets with key-reference pairs
+// the iterator for this should be dereferenced as the same type
+// of iterator according to the key type
+template <typename KeyT, typename ValueT>
+struct set_container : public std::vector<ValueT *>{
+private:
+	// static_assert(!is_pair<ValueT>::value, "This is a pair" );
+	typedef std::vector<ValueT *> 				base_type;
+	typedef std::unordered_map<KeyT, std::size_t>		key_storage_type;
+	typedef set_container 						set_self_type;
+
+	key_storage_type 							mKeyStore;
+
+	template <bool is_const>
+	struct set_container_iterator{
+	private:
+		typedef typename std::conditional<is_const, typename base_type::const_iterator, typename base_type::iterator>::type base_iterator;
+		base_iterator 		mIt;
+		typename std::conditional<is_const, typename std::add_const<set_self_type>::type, set_self_type>::type * mCont;
+	public:
+		typedef ValueT								orig_value_type;
+		typedef set_container_iterator				self_type;
+		typedef std::ptrdiff_t 						difference_type;
+	    typedef typename std::conditional<is_const, 
+    			typename std::add_const<orig_value_type>::type, 
+    			orig_value_type>::type 						
+	    								  			value_type;
+	    typedef value_type &			  			reference;
+	    typedef value_type *						pointer;
+	    typedef std::random_access_iterator_tag		iterator_category;
+
+		// construction
+		set_container_iterator(set_container * m, base_iterator it)
+		: mCont(m), mIt(it){};
+
+		// copy assignment
+		set_container_iterator & operator=(const set_container_iterator & cit){
+			set_container_iterator i(cit);
+			std::swap(i,*this);
+			return *this;
+		}
+
+		pointer operator->() {return *mIt;};  // returns ValueT *
+		reference operator*() {return *(*mIt);}; // returns ValueT &
+
+		// increment operators
+		self_type operator++(){
+			mIt++;
+			return *this;
+		}
+		self_type operator++(int blah){
+			mIt++;
+			return *this;
+		}
+		self_type operator+=(std::size_t n){
+			mIt += n;
+			return *this;
+		}
+
+		// decrement operators
+		self_type operator--(){
+			mIt--;
+			return *this;
+		}
+		self_type operator--(int blah){
+			mIt--;
+			return *this;
+		}
+		self_type operator-=(std::size_t n){
+			mIt -= n;
+			return *this;
+		}
+		
+
+		// equivalence operators
+		bool operator!=(const self_type & leaf) const {return mIt != leaf.mIt;};
+		bool operator==(const self_type & leaf) const {return mIt == leaf.mIt;};
+
+		// random access operators
+		difference_type operator-(const self_type & it) const {
+			return mIt - it.mIt;
+		}
+		self_type operator-(std::size_t n) const {
+			return self_type(mCont, mIt - n);
+		}
+		self_type operator+(std::size_t n) const {
+			return self_type(mCont, mIt + n);
+		}
+		
+	};
+
+public:
+
+	typedef set_container_iterator<true> 	const_iterator;
+	typedef set_container_iterator<false> 	iterator;
+
+	iterator begin() {return iterator(this, base_type::begin());};
+	iterator end()	 {return iterator(this, base_type::end());};
+
+	const_iterator cbegin() const {return const_iterator(this, base_type::cbegin());};
+	const_iterator cend() const	 {return const_iterator(this, base_type::cend());};
+
+
+	iterator find(KeyT k) {
+		auto kit = mKeyStore.find(k);
+		return (kit == mKeyStore.end() ? iterator(this, base_type::end()) : iterator(this, base_type::begin()+kit->second));
+	};
+
+	iterator insert(KeyT k, ValueT * v){
+		base_type::push_back(v);
+		mKeyStore[k] = base_type::size()-1;
+	}
+
+
+};
+// */
+
+
+
+
+/*
+// container that contains the sets with key-reference pairs
+// the iterator for this should be dereferenced as the same type
+// of iterator according to the key type
+template <typename KeyT, typename ValueT>
+struct set_container : public std::vector<ValueT *>{
+private:
+	// static_assert(!is_pair<ValueT>::value, "This is a pair" );
+	typedef std::vector<ValueT *> 				base_type;
+	typedef std::unordered_map<KeyT, std::size_t>		key_storage_type;
+	typedef set_container 						set_self_type;
+
+	// typedef  base_iterator;
+	typedef typename base_type::iterator base_iterator;
+
+	key_storage_type 							mKeyStore;
+
+
+	template <bool is_const>
+	struct set_container_iterator : public base_iterator {
+	private:
+		typedef typename std::conditional<is_const, typename base_type::const_iterator, typename base_type::iterator>::type base_iterator;
+		base_iterator 		mIt;
+		typename std::conditional<is_const, typename std::add_const<set_self_type>::type, set_self_type>::type * mCont;
+	public:
+		typedef ValueT								orig_value_type;
+		typedef set_container_iterator				self_type;
+		typedef std::ptrdiff_t 						difference_type;
+	    typedef typename std::conditional<is_const, 
+    			typename std::add_const<orig_value_type>::type, 
+    			orig_value_type>::type 						
+	    								  			value_type;
+	    typedef value_type &			  			reference;
+	    typedef value_type *						pointer;
+	    typedef std::random_access_iterator_tag		iterator_category;
+
+	    using base_iterator::base_iterator;
+		// // construction
+		// set_container_iterator(set_container * m, base_iterator it)
+		// : mCont(m), mIt(it){};
+
+		// // copy assignment
+		// set_container_iterator & operator=(const set_container_iterator & cit){
+		// 	set_container_iterator i(cit);
+		// 	std::swap(i,*this);
+		// 	return *this;
+		// }
+
+		pointer operator->() {return *(*base_iterator::operator*());};  // returns ValueT *
+		reference operator*() {return *(*(*(base_iterator::operator*())));}; // returns ValueT &
+
+		// // increment operators
+		// self_type operator++(){
+		// 	mIt++;
+		// 	return *this;
+		// }
+		// self_type operator++(int blah){
+		// 	mIt++;
+		// 	return *this;
+		// }
+		// self_type operator+=(std::size_t n){
+		// 	mIt += n;
+		// 	return *this;
+		// }
+
+		// // decrement operators
+		// self_type operator--(){
+		// 	mIt--;
+		// 	return *this;
+		// }
+		// self_type operator--(int blah){
+		// 	mIt--;
+		// 	return *this;
+		// }
+		// self_type operator-=(std::size_t n){
+		// 	mIt -= n;
+		// 	return *this;
+		// }
+		
+
+		// // equivalence operators
+		// bool operator!=(const self_type & leaf) const {return mIt != leaf.mIt;};
+		// bool operator==(const self_type & leaf) const {return mIt == leaf.mIt;};
+
+		// // random access operators
+		// difference_type operator-(const self_type & it) const {
+		// 	return mIt - it.mIt;
+		// }
+		// self_type operator-(std::size_t n) const {
+		// 	return self_type(mCont, mIt - n);
+		// }
+		// self_type operator+(std::size_t n) const {
+		// 	return self_type(mCont, mIt + n);
+		// }
+		
+	};
+
+public:
+
+	typedef set_container_iterator<true> 	const_iterator;
+	typedef set_container_iterator<false> 	iterator;
+
+	using base_type::begin;
+	using base_type::end;
+	using base_type::cbegin;
+	using base_type::cend;
+	// iterator begin() {return iterator(this, base_type::begin());};
+	// iterator end()	 {return iterator(this, base_type::end());};
+
+	// const_iterator cbegin() const {return const_iterator(this, base_type::cbegin());};
+	// const_iterator cend() const	 {return const_iterator(this, base_type::cend());};
+
+
+	// iterator find(KeyT k) {
+	// 	auto kit = mKeyStore.find(k);
+	// 	return (kit == mKeyStore.end() ? iterator(this, base_type::end()) : iterator(this, base_type::begin()+kit->second));
+	// };
+
+	iterator find(KeyT k) {
+		auto kit = mKeyStore.find(k);
+		return (kit == mKeyStore.end() ? iterator(base_type::end()) : iterator(base_type::begin() + kit->second));
+	};
+
+	iterator insert(KeyT k, ValueT * v){
+		base_type::push_back(v);
+		mKeyStore[k] = base_type::size()-1;
+	}
+
+
+};
+// */
+
+
+
+
+
+
+
+
 
 
 
@@ -151,6 +416,7 @@ private:
 	typedef typename container_value_type<container_type>::type 	value_type;
 	typedef typename key_type<value_type>::type 					key_type;
 	typedef set_container<key_type, value_type>						set_container_type;
+
 
 	typedef std::unordered_multimap<key_type, set_type> 			multimap_type;		// this manages the subdomains for every key
 	typedef std::map<set_type, set_container_type>					set_map_type;		// this maps from a set_type to a set_container
@@ -185,7 +451,8 @@ public:
 	void  add_to_set(const iterator & it, set_type s){
 		// std::cout << "adding key: " << get_key(it) << " to set " << s << std::endl;
 		mMultiMap.emplace(get_key(it), s);		// create entry in the multimap
-		mSetMap[s].insert(std::make_pair(get_key(it), &(*it)));	// create entry in the set container
+		// mSetMap[s].insert(std::make_pair(get_key(it), &(*it)));	// create entry in the set container
+		mSetMap[s].insert(get_key(it), &(*it));	// create entry in the set container
 	}
 
 	// remove an existing element from set "s"
