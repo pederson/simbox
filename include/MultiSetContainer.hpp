@@ -38,7 +38,7 @@ struct key_type<std::pair<const key, value>>{
 
 
 
-/*
+
 // container that contains the sets with key-reference pairs
 // the iterator for this should be dereferenced as the same type
 // of iterator according to the key type
@@ -125,7 +125,7 @@ public:
 
 
 
-
+/*
 // container that contains the sets with key-reference pairs
 // the iterator for this should be dereferenced as the same type
 // of iterator according to the key type
@@ -439,20 +439,12 @@ public:
 
 	set_container_type & set(set_type s){return mSetMap[s];};
 
-	std::vector<set_type> enumerate_sets() const {
-		std::vector<set_type> out;
-		for (auto it = mSetMap.begin(); it != mSetMap.end(); it++){
-			out.push_back(it->first);
-		}
-		return out;
-	}
-
 	// add an existing element to a set "s"
 	void  add_to_set(const iterator & it, set_type s){
 		// std::cout << "adding key: " << get_key(it) << " to set " << s << std::endl;
 		mMultiMap.emplace(get_key(it), s);		// create entry in the multimap
-		// mSetMap[s].insert(std::make_pair(get_key(it), &(*it)));	// create entry in the set container
-		mSetMap[s].insert(get_key(it), &(*it));	// create entry in the set container
+		mSetMap[s].insert(std::make_pair(get_key(it), &(*it)));	// create entry in the set container
+		// mSetMap[s].insert(get_key(it), &(*it));	// create entry in the set container
 	}
 
 	// remove an existing element from set "s"
@@ -477,10 +469,98 @@ public:
 	}
 
 	// set enumerator
+	std::vector<set_type> enumerate_sets() const {
+		std::vector<set_type> out;
+		for (auto it = mSetMap.begin(); it != mSetMap.end(); it++){
+			out.push_back(it->first);
+		}
+		return out;
+	}
 
+
+
+	// the following logical operations return a vector of keys (either a key in the
+	// case of a map container, or an index (integer) in the case of a vector container)
 	// set intersection
+	std::vector<key_type> set_intersection(set_type s1, set_type s2){
+		std::vector<key_type> k1, k2;
+
+		k1.reserve(set(s1).size());
+		k2.reserve(set(s2).size());
+
+		for (auto it = set(s1).begin(); it != set(s1).end(); it++) k1.push_back(it->first);
+		for (auto it = set(s2).begin(); it != set(s2).end(); it++) k2.push_back(it->first);
+
+		std::sort(k1.begin(), k1.end());
+		std::sort(k2.begin(), k2.end());
+
+		std::vector<key_type> out;
+
+		std::set_intersection(k1.begin(), k1.end(), k2.begin(), k2.end(), std::back_inserter(out));
+
+		return out;
+	}
+
 	// set difference
+	std::vector<key_type> set_difference(set_type s1, set_type s2){
+		std::vector<key_type> k1, k2;
+
+		k1.reserve(set(s1).size());
+		k2.reserve(set(s2).size());
+
+		for (auto it = set(s1).begin(); it != set(s1).end(); it++) k1.push_back(it->first);
+		for (auto it = set(s2).begin(); it != set(s2).end(); it++) k2.push_back(it->first);
+
+		std::sort(k1.begin(), k1.end());
+		std::sort(k2.begin(), k2.end());
+
+		std::vector<key_type> out;
+
+		std::set_difference(k1.begin(), k1.end(), k2.begin(), k2.end(), std::back_inserter(out));
+
+		return out;
+	}
+
+
 	// set union
+	std::vector<key_type> set_union(set_type s1, set_type s2){
+		std::vector<key_type> k1, k2;
+
+		k1.reserve(set(s1).size());
+		k2.reserve(set(s2).size());
+
+		for (auto it = set(s1).begin(); it != set(s1).end(); it++) k1.push_back(it->first);
+		for (auto it = set(s2).begin(); it != set(s2).end(); it++) k2.push_back(it->first);
+
+		std::sort(k1.begin(), k1.end());
+		std::sort(k2.begin(), k2.end());
+
+		std::vector<key_type> out;
+
+		std::set_union(k1.begin(), k1.end(), k2.begin(), k2.end(), std::back_inserter(out));
+
+		return out;
+	}
+
+	// set xor
+	std::vector<key_type> set_xor(set_type s1, set_type s2){
+		std::vector<key_type> k1, k2;
+
+		k1.reserve(set(s1).size());
+		k2.reserve(set(s2).size());
+
+		for (auto it = set(s1).begin(); it != set(s1).end(); it++) k1.push_back(it->first);
+		for (auto it = set(s2).begin(); it != set(s2).end(); it++) k2.push_back(it->first);
+
+		std::sort(k1.begin(), k1.end());
+		std::sort(k2.begin(), k2.end());
+
+		std::vector<key_type> out;
+
+		std::set_symmetric_difference(k1.begin(), k1.end(), k2.begin(), k2.end(), std::back_inserter(out));
+
+		return out;
+	}
 
 };
 
