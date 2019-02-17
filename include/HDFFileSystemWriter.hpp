@@ -116,6 +116,8 @@ public:
 	}
 
 
+	// FIXME: This is SO SLOW, because of the runtime use of tuples...
+	// probably better off by using a pointer with length given
 	// write a row of data to an existing dataset
 	template <typename Arg1, typename... Args, typename... Path>
 	bool write_row(std::size_t row, std::tuple<Arg1, Args...> cols, Path... pth){
@@ -141,6 +143,34 @@ public:
 		block[0] = 1; block[1] = 1;
 		H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, stride, count, block);
 		H5Dwrite(set, H5DataType<Arg1>::value, ms, ds, mPlistId, &vals.front());
+		
+		H5Pclose(mPlistId);
+		H5Sclose(ms);
+		H5Sclose(ds);
+		H5Dclose(set);
+		return true;
+	}
+
+	// write a column of data to an existing dataset
+	template <typename T, typename... Path>
+	bool write_col(std::size_t col, T * data, hsize_t length, Path... pth){
+		
+		hid_t set = openDataset(mH5File, pth...);
+		hid_t ds = H5Dget_space(set); 	// this makes a copy
+		hid_t ms = makeDataspace(1, &length);
+
+		// get propertylist ID
+		mPlistId = H5Pcreate(H5P_DATASET_XFER);
+		H5Pset_dxpl_mpio(mPlistId, H5FD_MPIO_INDEPENDENT);
+
+		// write to file
+		hsize_t offset[2], count[2], stride[2], block[2];
+		offset[0] = 0; offset[1] = col;
+		count[0] = length; count[1] = 1;
+		stride[0] = 1; stride[1] = 1;
+		block[0] = 1; block[1] = 1;
+		H5Sselect_hyperslab(ds, H5S_SELECT_SET, offset, stride, count, block);
+		H5Dwrite(set, H5DataType<T>::value, ms, ds, mPlistId, data);
 		
 		H5Pclose(mPlistId);
 		H5Sclose(ms);

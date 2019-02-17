@@ -104,6 +104,10 @@ private:
 		bool operator!=(const self_type & leaf) const {return mIt != leaf.mIt;};
 		bool operator==(const self_type & leaf) const {return mIt == leaf.mIt;};
 
+		// // random access iterator operators
+		// template <typename T = base_iterator>
+		// typename std::enable_if<std::is_same<typename std::iterator_traits<T>::iterator_category, std::random_access_iterator_tag>::value, difference_type>::type 
+		// operator-(const self_type & it) const {return mIt-it.mIt;};
 	};
 
 public:
