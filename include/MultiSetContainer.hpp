@@ -80,6 +80,8 @@ private:
 		pointer operator->() const {return mIt->second;};
 		reference operator*() const {return *mIt->second;};
 
+		KeyT key() const {return mIt->first;};
+
 		// increment operators
 		self_type operator++(){
 			mIt++;

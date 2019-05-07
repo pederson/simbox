@@ -29,8 +29,8 @@
 	template <class IteratorType, 
 			  class Functor,
 			  typename... Args>
-	void for_each(IteratorType beg, IteratorType end, Functor u, Args... a){
-		std::for_each(beg, end, [&u, &a...](auto & itr){return u.operator()(itr, a...);});
+	void for_each(IteratorType beg, IteratorType end, Functor u, Args && ... a){
+		std::for_each(beg, end, [&u, &a...](auto & itr){return u.operator()(itr, std::forward<Args>(a)...);});
 	}
 
 
@@ -70,8 +70,8 @@
 			  class IteratorType, 
 			  class Functor,
 			  typename... Args>
-	void for_each(IteratorType beg, IteratorType end, Functor u, Args... a){
-		std::for_each(beg, end, [&u, &a...](auto & itr){return u.operator()(InterfacePolicy::get(itr), a...);});
+	void for_each(IteratorType beg, IteratorType end, Functor u, Args && ... a){
+		std::for_each(beg, end, [&u, &a...](auto & itr){return u.operator()(InterfacePolicy::get(itr), std::forward<Args>(a)...);});
 	}
 
 
